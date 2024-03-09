@@ -1,8 +1,9 @@
-export default class Player extends Phaser.GameObjects.Sprite {
-  constructor(scene, x, y) {
+export default class Player extends Phaser.Physics.Arcade.Image {
+  constructor(scene) {
     super(scene, GAME_WIDTH/2, GAME_HEIGHT - 40, "spaceships", 7);
+    scene.physics.add.existing(this); 
 
-    this.movementAmount = 5; 
+    this.movementAmount = 5;
   }
 
   moveLeft() {
