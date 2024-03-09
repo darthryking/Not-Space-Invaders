@@ -26,17 +26,43 @@ class Example extends Phaser.Scene {
     }
 }
 
-const config = {
+
+const game = new Phaser.Game({
     type: Phaser.AUTO,
     width: 800,
     height: 600,
     scene: Example,
+    parent: 'game',
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 200 }
         }
     }
+});
+
+
+const preload = () => {
+    this.load.image('sky', 'assets/sky.png');
+    this.load.image('ground', 'assets/platform.png');
+    this.load.image('star', 'assets/star.png');
+    this.load.image('bomb', 'assets/bomb.png');
+    this.load.spritesheet(
+        'dude',
+        'assets/dude.png',
+        {
+            frameWidth: 32,
+            frameHeight: 48
+        }
+    );
 };
 
-const game = new Phaser.Game(config);
+
+const create = () => {
+
+};
+
+
+const update = () => {
+
+};
