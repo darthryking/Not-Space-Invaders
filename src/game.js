@@ -1,3 +1,5 @@
+import Player from './player.js';
+
 window.GAME_WIDTH = 800;
 window.GAME_HEIGHT = 600;
 
@@ -11,16 +13,18 @@ class Game extends Phaser.Scene {
   }
 
   create() {
-    this.player = this.add.sprite(GAME_WIDTH/2, GAME_HEIGHT - 100, 'spaceships', 0); 
+    this.player = new Player(this);
+    this.add.existing(this.player); 
   }
 
   update() {
     let movementAmount = 5;
     let cursors = this.input.keyboard.createCursorKeys();
+    
     if (cursors.left.isDown) {
-      this.player.x -= movementAmount;
+      this.player.moveLeft();
     } else if (cursors.right.isDown) {
-      this.player.x += movementAmount;
+      this.player.moveRight(); 
     }
   }
 }
