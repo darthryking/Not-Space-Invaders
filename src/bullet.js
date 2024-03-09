@@ -7,6 +7,14 @@ export default class Bullet extends Phaser.Physics.Arcade.Image {
     scene.add.existing(this);
 
     // Set velocity
-    this.setVelocity(vX, vY); 
+    this.setVelocity(vX, vY);
+
+    this.setCollideWorldBounds(true);
+    this.body.onWorldBounds = true;
+    this.body.world.on('worldbounds', (body) => {
+        if (body.gameObject === this) {
+            this.destroy();
+        }
+    });
   }
 }

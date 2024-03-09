@@ -26,15 +26,15 @@ class Game extends Phaser.Scene {
   update() {
     let movementAmount = 5;
     let cursors = this.input.keyboard.createCursorKeys();
-    
+
     if (cursors.left.isDown) {
       this.player.moveLeft();
     } else if (cursors.right.isDown) {
-      this.player.moveRight(); 
+      this.player.moveRight();
     }
 
     if (Phaser.Input.Keyboard.JustDown(cursors.up)) {
-      let bullet = new Bullet(this, this.player.x, this.player.y, 0, -50); 
+      let bullet = new Bullet(this, this.player.x, this.player.y, 0, -500);
     }
   }
 }
