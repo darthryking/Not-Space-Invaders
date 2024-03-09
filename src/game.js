@@ -20,9 +20,7 @@ class Game extends Phaser.Scene {
   }
 
   create() {
-    this.player = new Player(this);
-
-    let bullet = new Bullet(this, 0, 0, 10, 10);
+    this.player = new Player(this, 100, 100, 0, 0);
   }
 
   update() {
@@ -33,6 +31,10 @@ class Game extends Phaser.Scene {
       this.player.moveLeft();
     } else if (cursors.right.isDown) {
       this.player.moveRight(); 
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(cursors.up)) {
+      let bullet = new Bullet(this, this.player.x, this.player.y, 0, -50); 
     }
   }
 }
