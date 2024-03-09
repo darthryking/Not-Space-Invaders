@@ -1,6 +1,6 @@
 export default class Player extends Phaser.GameObjects.Sprite {
   constructor(scene, x, y) {
-    super(scene, GAME_WIDTH/2, GAME_HEIGHT, "spaceships", 0);
+    super(scene, GAME_WIDTH/2, GAME_HEIGHT - 40, "spaceships", 7);
 
     this.movementAmount = 5; 
   }
