@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+make indent
+
+diff=$(git diff --name-only)
+
+if [ ! -z "${diff}" ]; then
+    echo -e "\n*** Note: Pre-commit auto-formatter formatted some files. (Run git add again!) ***\n" >&2
+    exit 1
+fi
