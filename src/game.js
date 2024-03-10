@@ -29,7 +29,8 @@ class Game extends Phaser.Scene {
 
         if (cursors.left.isDown) {
             this.player.moveLeft();
-        } else if (cursors.right.isDown) {
+        }
+        else if (cursors.right.isDown) {
             this.player.moveRight();
         }
 
