@@ -1,5 +1,8 @@
 import Player from './player.js';
-import Bullet from './bullet.js';
+import {
+    LaserGun
+}
+from './weapons.js';
 
 window.GAME_WIDTH = 800;
 window.GAME_HEIGHT = 600;
@@ -40,8 +43,13 @@ class Game extends Phaser.Scene {
             this.player.moveRight();
         }
 
-        if (Phaser.Input.Keyboard.JustDown(cursors.up)) {
-            let bullet = new Bullet(this, this.player.x, this.player.y, 0, -500);
+        const activePointer = this.input.activePointer;
+
+        if (activePointer.leftButtonDown()) {
+            const mouseX = activePointer.x;
+            const mouseY = activePointer.y;
+
+            this.weapon.fire(mouseX, mouseY);
         }
     }
 }
@@ -56,7 +64,7 @@ const game = new Phaser.Game({
         default: 'arcade',
         arcade: {
             gravity: {},
-            debug: true
+            debug: false
         }
     },
 });
