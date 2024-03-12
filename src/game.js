@@ -1,6 +1,7 @@
 import Player from './player.js';
 import {
-    LaserGun
+    LaserGun,
+    BeamCannon,
 }
 from './weapons.js';
 
@@ -24,10 +25,22 @@ class Game extends Phaser.Scene {
 
     create() {
         this.player = new Player(this, 100, 100, 0, 0);
-        this.weapon = new LaserGun(this, this.player);
+
+        this.currentWeapon = null;
+        this.weapons = [
+            new LaserGun(this, this.player),
+            new BeamCannon(this, this.player),
+        ];
+        this.switchWeapon(0);
+
+        const keyboard = this.input.keyboard;
+
         this.keys = {
-            a: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-            d: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+            a: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+            d: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+            num1: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE),
+            num2: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO),
+            num3: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE),
         };
         this.cursors = this.input.keyboard.createCursorKeys();
     }
@@ -43,14 +56,46 @@ class Game extends Phaser.Scene {
             this.player.moveRight();
         }
 
-        const activePointer = this.input.activePointer;
-
-        if (activePointer.leftButtonDown()) {
-            const mouseX = activePointer.x;
-            const mouseY = activePointer.y;
-
-            this.weapon.fire(mouseX, mouseY);
+        if (Phaser.Input.Keyboard.JustDown(keys.num1)) {
+            this.switchWeapon(0);
         }
+        else if (Phaser.Input.Keyboard.JustDown(keys.num2)) {
+            this.switchWeapon(1);
+        }
+        else if (Phaser.Input.Keyboard.JustDown(keys.num3)) {
+            // this.switchWeapon(2);
+        }
+
+        const [mouseX, mouseY] = this.getMousePos();
+
+        if (this.input.activePointer.leftButtonDown()) {
+            this.currentWeapon?.fire(mouseX, mouseY);
+        }
+        else {
+            this.currentWeapon?.updateNotFiring(mouseX, mouseY);
+        }
+    }
+
+    switchWeapon(index) {
+        if (index >= this.weapons.length) {
+            return;
+        }
+
+        if (this.currentWeapon !== null) {
+            const [mouseX, mouseY] = this.getMousePos();
+            this.currentWeapon.updateNotFiring(mouseX, mouseY);
+            this.currentWeapon.isActive = false;
+        }
+
+        this.currentWeapon = this.weapons[index];
+        this.currentWeapon.isActive = true;
+
+        console.log("Switched to " + this.currentWeapon.name);
+    }
+
+    getMousePos() {
+        const activePointer = this.input.activePointer;
+        return [activePointer.x, activePointer.y];
     }
 }
 
