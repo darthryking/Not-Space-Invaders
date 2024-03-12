@@ -1,24 +1,29 @@
-export default class Player extends Phaser.Physics.Arcade.Image {
-    constructor(scene) {
-        super(scene, GAME_WIDTH / 2, GAME_HEIGHT - 40, "spaceships", 7);
+import {
+    Sprite
+}
+from './gameObjects.js';
 
-        // Add to scene
-        scene.physics.add.existing(this);
-        scene.add.existing(this);
+export default class Player extends Sprite {
+    constructor(game, bitmapName, x, y, speed) {
+        super(game, bitmapName, x, y);
 
-        // Some configuration
-        this.movementAmount = 5;
+        this.speed = speed;
     }
 
     moveLeft() {
-        if (this.x > this.width / 2) {
-            this.x -= this.movementAmount;
-        }
+        this.x -= this.speed;
     }
 
     moveRight() {
-        if (this.x < GAME_WIDTH - (this.width / 2)) {
-            this.x += this.movementAmount;
-        }
+        this.x += this.speed;
+    }
+
+    clampToBounds(left, right) {
+        this.x = Math.max(this.x, left);
+        this.x = Math.min(this.x, right - this.getWidth());
+    }
+
+    getFirePos() {
+        return [this.getCenterX(), this.getTop()];
     }
 }
