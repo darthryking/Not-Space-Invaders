@@ -21,16 +21,22 @@ class Game extends Phaser.Scene {
 
     create() {
         this.player = new Player(this, 100, 100, 0, 0);
+        this.weapon = new LaserGun(this, this.player);
+        this.keys = {
+            a: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+            d: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+        };
+        this.cursors = this.input.keyboard.createCursorKeys();
     }
 
     update() {
-        let movementAmount = 5;
-        let cursors = this.input.keyboard.createCursorKeys();
+        const keys = this.keys;
+        const cursors = this.cursors;
 
-        if (cursors.left.isDown) {
+        if (cursors.left.isDown || keys.a.isDown) {
             this.player.moveLeft();
         }
-        else if (cursors.right.isDown) {
+        else if (cursors.right.isDown || keys.d.isDown) {
             this.player.moveRight();
         }
 
