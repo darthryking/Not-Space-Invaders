@@ -30,8 +30,14 @@ const doBeautify = async () => {
         const data = await fs.readFile(itemPath, 'utf-8');
         const beautifiedData = beautify(data, BEAUTIFY_CONFIG);
 
-        const outFile = await fs.open(itemPath, 'w')
-        await outFile.writeFile(beautifiedData);
+        let outFile = null;
+        try {
+            outFile = await fs.open(itemPath, 'w');
+            await outFile.writeFile(beautifiedData);
+        }
+        finally {
+            await outFile?.close();
+        }
     }
 };
 
