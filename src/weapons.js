@@ -14,8 +14,12 @@ import {
 from './configs.js';
 
 export class CombatCharacter extends Sprite {
-    constructor(game, bitmapName, x, y) {
+    constructor(game, bitmapName, x, y, maxHealth) {
         super(game, bitmapName, x, y);
+
+        this.maxHealth = maxHealth;
+        this.health = maxHealth;
+
         this.weapon = null;
     }
 
@@ -27,10 +31,24 @@ export class CombatCharacter extends Sprite {
 
         this.weapon = weapon;
         this.weapon.owner = this;
+
+        return weapon;
     }
 
     getFirePos() {
         throw new Error(".getFirePos() not implemented!");
+    }
+
+    takeDamage(damage) {
+        this.health -= damage;
+
+        if (this.health <= 0) {
+            this.remove();
+        }
+    }
+
+    likes(otherSprite) {
+        return otherSprite === this;
     }
 }
 
@@ -54,11 +72,13 @@ export class Weapon extends GameObject {
 export class LaserGun extends Weapon {
     #nextShotTime;
 
-    constructor(game, rof, bulletSpeed) {
+    constructor(game, rof, bulletSpeed, bulletDamage) {
         super(game);
 
         this.rof = rof;
-        this.bulletSpeed = bulletSpeed
+
+        this.bulletSpeed = bulletSpeed;
+        this.bulletDamage = bulletDamage;
 
         this.#nextShotTime = 0;
     }
@@ -81,7 +101,12 @@ export class LaserGun extends Weapon {
         );
 
         this.game.addGameObject(
-            new Bullet(this.game, firePosX, firePosY, vX, vY)
+            new Bullet(
+                this.game, this.owner,
+                firePosX, firePosY,
+                vX, vY,
+                this.bulletDamage,
+            )
         );
 
         this.#nextShotTime = now + this.#getShotIntervalMs();
@@ -187,7 +212,7 @@ export class MissileLauncher extends Weapon {
             const [firePosX, firePosY] = this.owner.getFirePos();
             this.missile = this.game.addGameObject(
                 new Missile(
-                    this.game, this,
+                    this.game, this.owner, this,
                     firePosX, firePosY,
                     this.missileSpeed,
                     this.missileSelfDestructDist,
@@ -228,11 +253,14 @@ export class MissileLauncher extends Weapon {
 }
 
 export class Projectile extends Sprite {
-    constructor(game, bitmapName, x, y, vX, vY) {
+    constructor(game, owner, bitmapName, x, y, vX, vY, damage) {
         super(game, bitmapName, x, y);
 
         this.vX = vX;
         this.vY = vY;
+
+        this.damage = damage;
+        this.owner = owner;
     }
 
     update(now) {
@@ -244,21 +272,43 @@ export class Projectile extends Sprite {
 
         if (!this.isOnScreen()) {
             this.remove();
+            return;
         }
 
         this.angle = Math.atan2(vY, vX) + Math.PI / 2;
+
+        super.update(now);
+    }
+
+    collidesWith(otherSprite) {
+        if (this.owner.likes(otherSprite)) {
+            return false;
+        }
+
+        return super.collidesWith(otherSprite);
     }
 }
 
 export class Bullet extends Projectile {
-    constructor(game, x, y, vX, vY) {
-        super(game, 'bullet', x, y, vX, vY);
+    constructor(game, owner, x, y, vX, vY, damage) {
+        super(game, owner, 'bullet', x, y, vX, vY, damage);
+    }
+
+    onCollision(otherSprite) {
+        if (otherSprite instanceof CombatCharacter) {
+            otherSprite.takeDamage(this.damage);
+            this.remove();
+        }
     }
 }
 
 export class Missile extends Projectile {
-    constructor(game, missileLauncher, x, y, speed, selfDestructDist) {
-        super(game, 'missile', x, y, 0, 0, 0, 0);
+    constructor(
+        game, owner, missileLauncher,
+        x, y,
+        damage, speed, selfDestructDist,
+    ) {
+        super(game, owner, 'missile', x, y, 0, 0, 0, 0, damage);
 
         this.missileLauncher = missileLauncher;
         this.speed = speed;

@@ -64,6 +64,16 @@ export class Sprite extends GameObject {
         return [this.getCenterX(), this.getCenterY()];
     }
 
+    update(now) {
+        for (const gameObject of this.game.getActiveGameObjects()) {
+            if (gameObject !== this &&
+                gameObject instanceof Sprite &&
+                this.collidesWith(gameObject)) {
+                this.onCollision(gameObject);
+            }
+        }
+    }
+
     draw(ctx) {
         const halfWidth = this.getWidth() / 2;
         const halfHeight = this.getHeight() / 2;
@@ -95,5 +105,29 @@ export class Sprite extends GameObject {
         }
 
         return true;
+    }
+
+    collidesWith(otherSprite) {
+        if (this.getRight() < otherSprite.getLeft()) {
+            return false;
+        }
+
+        if (this.getLeft() > otherSprite.getRight()) {
+            return false;
+        }
+
+        if (this.getTop() > otherSprite.getBottom()) {
+            return false;
+        }
+
+        if (this.getBottom() < otherSprite.getTop()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    onCollision(otherSprite) {
+        // no-op
     }
 }

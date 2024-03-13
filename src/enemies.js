@@ -18,8 +18,8 @@ import {
 from './configs.js';
 
 export default class Enemy extends CombatCharacter {
-    constructor(game, bitmapName, x, y) {
-        super(game, bitmapName, x, y);
+    likes(otherSprite) {
+        return otherSprite instanceof Enemy;
     }
 }
 
@@ -55,6 +55,8 @@ export class Alien extends Enemy {
         const aimY = canvas.height;
 
         this.weapon.fire(now, aimX, aimY);
+
+        super.update(now);
     }
 
     draw(ctx) {
