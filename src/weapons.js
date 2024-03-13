@@ -80,7 +80,7 @@ export class LaserGun extends Weapon {
         this.bulletSpeed = bulletSpeed;
         this.bulletDamage = bulletDamage;
 
-        this.#nextShotTime = 0;
+        this.nextShotTime = 0;
     }
 
     fire(now, aimX, aimY) {
@@ -90,7 +90,7 @@ export class LaserGun extends Weapon {
             return;
         }
 
-        if (now < this.#nextShotTime) {
+        if (now < this.nextShotTime) {
             return;
         }
 
@@ -109,10 +109,10 @@ export class LaserGun extends Weapon {
             )
         );
 
-        this.#nextShotTime = now + this.#getShotIntervalMs();
+        this.nextShotTime = now + this.getShotIntervalMs();
     }
 
-    #getShotIntervalMs() {
+    getShotIntervalMs() {
         return 1000 / this.rof;
     }
 

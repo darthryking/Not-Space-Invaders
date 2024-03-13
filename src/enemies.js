@@ -82,6 +82,8 @@ export class Alien extends Enemy {
             ALIEN_LASER_GUN_BULLET_DAMAGE,
         );
 
+        weapon.nextShotTime = now + weapon.getShotIntervalMs();
+
         this.switchWeapon(now, weapon);
     }
 }
