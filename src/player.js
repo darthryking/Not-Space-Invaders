@@ -1,9 +1,9 @@
 import {
-    Sprite
+    CombatCharacter
 }
-from './gameObjects.js';
+from './weapons.js';
 
-export default class Player extends Sprite {
+export default class Player extends CombatCharacter {
     constructor(game, bitmapName, x, y, speed) {
         super(game, bitmapName, x, y);
 

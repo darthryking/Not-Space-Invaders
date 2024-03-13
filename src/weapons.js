@@ -11,12 +11,32 @@ const BEAM_CANNON_BEAM_WIDTH = 2; // px
 const BEAM_CANNON_BEAM_LENGTH = 99999;
 const BEAM_CANNON_BEAM_COLOR = '#00FFFF';
 
+export class CombatCharacter extends Sprite {
+    constructor(game, bitmapName, x, y) {
+        super(game, bitmapName, x, y);
+        this.weapon = null;
+    }
+
+    switchWeapon(now, weapon) {
+        if (this.weapon !== null) {
+            this.weapon.updateNotFiring(now);
+            this.weapon.owner = null;
+        }
+
+        this.weapon = weapon;
+        this.weapon.owner = this;
+    }
+
+    getFirePos() {
+        throw new Error(".getFirePos() not implemented!");
+    }
+}
+
 export class Weapon extends GameObject {
-    constructor(game, player) {
+    constructor(game) {
         super(game);
 
-        this.player = player;
-
+        this.owner = null;
         this.isFiring = false;
     }
 
@@ -32,8 +52,8 @@ export class Weapon extends GameObject {
 export class LaserGun extends Weapon {
     #nextShotTime;
 
-    constructor(game, player, rof, bulletSpeed) {
-        super(game, player);
+    constructor(game, rof, bulletSpeed) {
+        super(game);
 
         this.rof = rof;
         this.bulletSpeed = bulletSpeed
@@ -44,11 +64,15 @@ export class LaserGun extends Weapon {
     fire(now, aimX, aimY) {
         super.fire(now, aimX, aimY);
 
+        if (this.owner === null) {
+            return;
+        }
+
         if (now < this.#nextShotTime) {
             return;
         }
 
-        const [firePosX, firePosY] = this.player.getFirePos();
+        const [firePosX, firePosY] = this.owner.getFirePos();
         const [vX, vY] = this.#calculateBulletVelocity(
             firePosX, firePosY,
             aimX, aimY,
@@ -87,18 +111,21 @@ export class BeamCannon extends Weapon {
     #beamEndX;
     #beamEndY;
 
-    constructor(game, player) {
-        super(game, player);
+    constructor(game) {
+        super(game);
 
-        const [firePosX, firePosY] = player.getFirePos();
-        this.#beamEndX = firePosX;
-        this.#beamEndY = firePosY;
+        this.#beamEndX = 0;
+        this.#beamEndY = 0;
     }
 
     fire(now, aimX, aimY) {
         super.fire(now, aimX, aimY);
 
-        const [firePosX, firePosY] = this.player.getFirePos();
+        if (this.owner === null) {
+            return;
+        }
+
+        const [firePosX, firePosY] = this.owner.getFirePos();
         const [beamEndX, beamEndY] = this.#calculateBeamEndPos(
             firePosX, firePosY,
             aimX, aimY,
@@ -109,8 +136,8 @@ export class BeamCannon extends Weapon {
     }
 
     draw(ctx) {
-        if (this.isFiring) {
-            const [firePosX, firePosY] = this.player.getFirePos();
+        if (this.isFiring && this.owner !== null) {
+            const [firePosX, firePosY] = this.owner.getFirePos();
 
             ctx.strokeStyle = BEAM_CANNON_BEAM_COLOR;
             ctx.lineWidth = BEAM_CANNON_BEAM_WIDTH;
@@ -139,8 +166,8 @@ export class BeamCannon extends Weapon {
 }
 
 export class MissileLauncher extends Weapon {
-    constructor(game, player, missileSpeed, missileSelfDestructDist) {
-        super(game, player);
+    constructor(game, missileSpeed, missileSelfDestructDist) {
+        super(game);
 
         this.missileSpeed = missileSpeed;
         this.missileSelfDestructDist = missileSelfDestructDist;
@@ -154,8 +181,8 @@ export class MissileLauncher extends Weapon {
     fire(now, aimX, aimY) {
         super.fire(now, aimX, aimY);
 
-        if (this.missile === null) {
-            const [firePosX, firePosY] = this.player.getFirePos();
+        if (this.missile === null && this.owner !== null) {
+            const [firePosX, firePosY] = this.owner.getFirePos();
             this.missile = this.game.addGameObject(
                 new Missile(
                     this.game, this,

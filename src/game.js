@@ -106,27 +106,23 @@ export default class Game {
         // Initialize the player's weapons
         const laserGun = this.addGameObject(
             new LaserGun(
-                this, player,
+                this,
                 LASER_GUN_ROF,
                 LASER_GUN_BULLET_SPEED,
             )
         );
         const beamCannon = this.addGameObject(
-            new BeamCannon(this, player)
+            new BeamCannon(this)
         );
         const missileLauncher = this.addGameObject(
             new MissileLauncher(
-                this, player,
+                this,
                 MISSILE_LAUNCHER_MISSILE_SPEED,
                 MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST,
             )
         );
 
-        let currentWeapon = laserGun;
-        const switchWeapon = (now, weapon) => {
-            currentWeapon.updateNotFiring(now);
-            currentWeapon = weapon;
-        };
+        player.switchWeapon(0, laserGun);
 
         // Main loop
         while (true) {
@@ -146,20 +142,20 @@ export default class Game {
             }
 
             if (keyboard.isKeyPressed('1')) {
-                switchWeapon(now, laserGun);
+                player.switchWeapon(now, laserGun);
             }
             else if (keyboard.isKeyPressed('2')) {
-                switchWeapon(now, beamCannon);
+                player.switchWeapon(now, beamCannon);
             }
             else if (keyboard.isKeyPressed('3')) {
-                switchWeapon(now, missileLauncher);
+                player.switchWeapon(now, missileLauncher);
             }
 
             if (mouse.leftMouseDown) {
-                currentWeapon.fire(now, mouse.x, mouse.y);
+                player.weapon.fire(now, mouse.x, mouse.y);
             }
             else {
-                currentWeapon.updateNotFiring(now, mouse.x, mouse.y);
+                player.weapon.updateNotFiring(now, mouse.x, mouse.y);
             }
 
             // Update everything
