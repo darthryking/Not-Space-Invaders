@@ -6,7 +6,16 @@ import {
     CombatCharacter,
     LaserGun,
 }
-from './weapons.js'
+from './weapons.js';
+import {
+    ALIEN_SPEED,
+    ALIEN_MAX_HEALTH,
+    ALIEN_LASER_GUN_MIN_ROF,
+    ALIEN_LASER_GUN_MAX_ROF,
+    ALIEN_LASER_GUN_BULLET_SPEED,
+    ALIEN_LASER_GUN_BULLET_DAMAGE,
+}
+from './configs.js';
 
 export default class Enemy extends CombatCharacter {
     constructor(game, bitmapName, x, y) {
@@ -15,18 +24,20 @@ export default class Enemy extends CombatCharacter {
 }
 
 export class Alien extends Enemy {
-    constructor(game, x, y, speed, rof, bulletSpeed) {
-        super(game, 'alien', x, y);
+    constructor(game, x, y) {
+        super(game, 'alien', x, y, ALIEN_MAX_HEALTH);
 
         this.angle = Math.PI;
 
-        this.speed = speed;
+        this.speed = ALIEN_SPEED;
         this.direction = 1;
-
-        this.switchWeapon(0, new LaserGun(game, rof, bulletSpeed));
     }
 
     update(now) {
+        if (this.weapon === null) {
+            this.#initWeapon(now);
+        }
+
         const canvas = this.game.canvas;
 
         this.x += this.speed * this.direction;
@@ -59,5 +70,16 @@ export class Alien extends Enemy {
 
     getFirePos() {
         return [this.getCenterX(), this.getBottom()];
+    }
+
+    #initWeapon(now) {
+        const weapon = new LaserGun(
+            this.game,
+            randRange(ALIEN_LASER_GUN_MIN_ROF, ALIEN_LASER_GUN_MAX_ROF),
+            ALIEN_LASER_GUN_BULLET_SPEED,
+            ALIEN_LASER_GUN_BULLET_DAMAGE,
+        );
+
+        this.switchWeapon(now, weapon);
     }
 }

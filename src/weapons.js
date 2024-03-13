@@ -5,11 +5,13 @@ from './utils.js';
 import GameObject, {
     Sprite
 }
-from './gameObjects.js'
-
-const BEAM_CANNON_BEAM_WIDTH = 2; // px
-const BEAM_CANNON_BEAM_LENGTH = 99999;
-const BEAM_CANNON_BEAM_COLOR = '#00FFFF';
+from './gameObjects.js';
+import {
+    BEAM_CANNON_BEAM_WIDTH,
+    BEAM_CANNON_BEAM_LENGTH,
+    BEAM_CANNON_BEAM_COLOR,
+}
+from './configs.js';
 
 export class CombatCharacter extends Sprite {
     constructor(game, bitmapName, x, y) {
