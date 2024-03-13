@@ -65,10 +65,13 @@ export class Sprite extends GameObject {
     }
 
     draw(ctx) {
+        const halfWidth = this.getWidth() / 2;
+        const halfHeight = this.getHeight() / 2;
+
         ctx.save();
-        ctx.translate(this.x, this.y);
+        ctx.translate(this.x + halfWidth, this.y + halfHeight);
         ctx.rotate(this.angle);
-        ctx.drawImage(this.bitmap, 0, 0);
+        ctx.drawImage(this.bitmap, -halfWidth, -halfHeight);
         ctx.restore();
     }
 

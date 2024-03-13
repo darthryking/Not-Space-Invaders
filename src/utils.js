@@ -5,3 +5,5 @@ export const dist = (x1, y1, x2, y2) => {
     const dY = y2 - y1;
     return Math.sqrt(dX * dX + dY * dY);
 };
+
+export const randRange = (lower, upper) => Math.random() * (upper - lower) + lower;

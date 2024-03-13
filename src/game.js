@@ -1,5 +1,6 @@
 import {
-    sleep
+    sleep,
+    randRange,
 }
 from './utils.js';
 import AssetManager from './assets.js';
@@ -15,13 +16,20 @@ import {
     MissileLauncher,
 }
 from './weapons.js';
+import {
+    Alien
+}
+from './enemies.js';
 
 const FRAMERATE = 60; // FPS
 const FRAME_INTERVAL = 1000 / FRAMERATE; // ms per frame
 
 const PLAYER_SPEED = 5; // Pixels per frame
+const ALIEN_SPEED = 5; // Pixels per frame
 
-const LASER_GUN_ROF = 3; // Shots per second
+const PLAYER_LASER_GUN_ROF = 3; // Shots per second
+const ALIEN_LASER_GUN_MIN_ROF = 0.5; // Shots per second
+const ALIEN_LASER_GUN_MAX_ROF = 1; // Shots per second
 const LASER_GUN_BULLET_SPEED = 10; // px per frame
 
 const MISSILE_LAUNCHER_MISSILE_SPEED = 10; // px per frame
@@ -84,6 +92,12 @@ export default class Game {
             69, 71,
         );
         await this.assets.loadBitmap(
+            'alien',
+            'assets/spaceships_spritesheet.png',
+            820, 22,
+            69, 71,
+        );
+        await this.assets.loadBitmap(
             'bullet',
             'assets/bullets_spritesheet.png',
             153, 57,
@@ -107,7 +121,7 @@ export default class Game {
         const laserGun = this.addGameObject(
             new LaserGun(
                 this,
-                LASER_GUN_ROF,
+                PLAYER_LASER_GUN_ROF,
                 LASER_GUN_BULLET_SPEED,
             )
         );
@@ -123,6 +137,43 @@ export default class Game {
         );
 
         player.switchWeapon(0, laserGun);
+
+        // Enemies
+        const enemies = [
+            new Alien(
+                this,
+                0, 0,
+                ALIEN_SPEED,
+                randRange(
+                    ALIEN_LASER_GUN_MIN_ROF,
+                    ALIEN_LASER_GUN_MAX_ROF,
+                ),
+                LASER_GUN_BULLET_SPEED,
+            ),
+            new Alien(
+                this,
+                100, 0,
+                ALIEN_SPEED,
+                randRange(
+                    ALIEN_LASER_GUN_MIN_ROF,
+                    ALIEN_LASER_GUN_MAX_ROF,
+                ),
+                LASER_GUN_BULLET_SPEED,
+            ),
+            new Alien(
+                this,
+                200, 0,
+                ALIEN_SPEED,
+                randRange(
+                    ALIEN_LASER_GUN_MIN_ROF,
+                    ALIEN_LASER_GUN_MAX_ROF,
+                ),
+                LASER_GUN_BULLET_SPEED,
+            ),
+        ];
+        for (const enemy of enemies) {
+            this.addGameObject(enemy);
+        }
 
         // Main loop
         while (true) {
