@@ -11,7 +11,8 @@ from './input.js';
 import Player from './player.js';
 import {
     LaserGun,
-    BeamCannon
+    BeamCannon,
+    MissileLauncher,
 }
 from './weapons.js';
 
@@ -22,6 +23,11 @@ const PLAYER_SPEED = 5; // Pixels per frame
 
 const LASER_GUN_ROF = 3; // Shots per second
 const LASER_GUN_BULLET_SPEED = 10; // px per frame
+
+const MISSILE_LAUNCHER_MISSILE_SPEED = 10; // px per frame
+
+// Distance to the mouse that the missile will explode, in px
+const MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST = 10;
 
 export default class Game {
     constructor() {
@@ -83,6 +89,12 @@ export default class Game {
             153, 57,
             8, 21,
         );
+        await this.assets.loadBitmap(
+            'missile',
+            'assets/bullets_spritesheet.png',
+            240, 10,
+            13, 26,
+        );
 
         // Initialize the player
         const player = this.addGameObject(
@@ -101,6 +113,13 @@ export default class Game {
         );
         const beamCannon = this.addGameObject(
             new BeamCannon(this, player)
+        );
+        const missileLauncher = this.addGameObject(
+            new MissileLauncher(
+                this, player,
+                MISSILE_LAUNCHER_MISSILE_SPEED,
+                MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST,
+            )
         );
 
         let currentWeapon = laserGun;
@@ -132,12 +151,15 @@ export default class Game {
             else if (keyboard.isKeyPressed('2')) {
                 switchWeapon(now, beamCannon);
             }
+            else if (keyboard.isKeyPressed('3')) {
+                switchWeapon(now, missileLauncher);
+            }
 
             if (mouse.leftMouseDown) {
                 currentWeapon.fire(now, mouse.x, mouse.y);
             }
             else {
-                currentWeapon.updateNotFiring(now);
+                currentWeapon.updateNotFiring(now, mouse.x, mouse.y);
             }
 
             // Update everything
