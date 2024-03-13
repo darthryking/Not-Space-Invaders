@@ -31,4 +31,6 @@ export const MISSILE_LAUNCHER_MISSILE_SPEED = 10; // px per frame
 // Distance to the mouse that the missile will explode, in px
 export const MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST = 10;
 
-export const DEBUG_SHOW_BOUNDING_BOXES = true;
+/* Debug stuff */
+export const DEBUG_SHOW_BOUNDING_BOXES = false;
+export const DEBUG_SHOW_FIRE_POS = false;

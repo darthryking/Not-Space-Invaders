@@ -10,6 +10,7 @@ import {
     BEAM_CANNON_BEAM_WIDTH,
     BEAM_CANNON_BEAM_LENGTH,
     BEAM_CANNON_BEAM_COLOR,
+    DEBUG_SHOW_FIRE_POS,
 }
 from './configs.js';
 
@@ -21,6 +22,19 @@ export class CombatCharacter extends Sprite {
         this.health = maxHealth;
 
         this.weapon = null;
+    }
+
+    draw(ctx) {
+        super.draw(ctx);
+
+        if (DEBUG_SHOW_FIRE_POS) {
+            const [firePosX, firePosY] = this.getFirePos();
+
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.ellipse(firePosX, firePosY, 5, 5, 0, Math.PI * 2, 0);
+            ctx.fill();
+        }
     }
 
     switchWeapon(now, weapon) {

@@ -59,17 +59,6 @@ export class Alien extends Enemy {
         super.update(now);
     }
 
-    draw(ctx) {
-        super.draw(ctx);
-
-        // const [firePosX, firePosY] = this.getFirePos();
-
-        // ctx.fillStyle = '#FF0000';
-        // ctx.beginPath();
-        // ctx.ellipse(firePosX, firePosY, 10, 10, 0, Math.PI * 2, 0);
-        // ctx.fill();
-    }
-
     getFirePos() {
         return [this.getCenterX(), this.getBottom()];
     }
