@@ -1,3 +1,8 @@
+import {
+    DEBUG_SHOW_BOUNDING_BOXES
+}
+from './configs.js'
+
 export default class GameObject {
     constructor(game) {
         this.game = game;
@@ -75,14 +80,22 @@ export class Sprite extends GameObject {
     }
 
     draw(ctx) {
-        const halfWidth = this.getWidth() / 2;
-        const halfHeight = this.getHeight() / 2;
+        const width = this.getWidth();
+        const height = this.getHeight();
+
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
 
         ctx.save();
         ctx.translate(this.x + halfWidth, this.y + halfHeight);
         ctx.rotate(this.angle);
         ctx.drawImage(this.bitmap, -halfWidth, -halfHeight);
         ctx.restore();
+
+        if (DEBUG_SHOW_BOUNDING_BOXES) {
+            ctx.strokeStyle = '#FF0000';
+            ctx.strokeRect(this.x, this.y, width, height);
+        }
     }
 
     isOnScreen() {
