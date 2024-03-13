@@ -154,32 +154,34 @@ export default class Game {
             const nextFrameTime = now + FRAME_INTERVAL;
 
             // Handle player input
-            if (keyboard.isKeyPressed('a') ||
-                keyboard.isKeyPressed('ArrowLeft')) {
-                player.moveLeft();
-                player.clampToBounds(0, canvas.width);
-            }
-            else if (keyboard.isKeyPressed('d') ||
-                keyboard.isKeyPressed('ArrowRight')) {
-                player.moveRight();
-                player.clampToBounds(0, canvas.width);
-            }
+            if (player.isAlive) {
+                if (keyboard.isKeyPressed('a') ||
+                    keyboard.isKeyPressed('ArrowLeft')) {
+                    player.moveLeft();
+                    player.clampToBounds(0, canvas.width);
+                }
+                else if (keyboard.isKeyPressed('d') ||
+                    keyboard.isKeyPressed('ArrowRight')) {
+                    player.moveRight();
+                    player.clampToBounds(0, canvas.width);
+                }
 
-            if (keyboard.isKeyPressed('1')) {
-                player.switchWeapon(now, laserGun);
-            }
-            else if (keyboard.isKeyPressed('2')) {
-                player.switchWeapon(now, beamCannon);
-            }
-            else if (keyboard.isKeyPressed('3')) {
-                player.switchWeapon(now, missileLauncher);
-            }
+                if (keyboard.isKeyPressed('1')) {
+                    player.switchWeapon(now, laserGun);
+                }
+                else if (keyboard.isKeyPressed('2')) {
+                    player.switchWeapon(now, beamCannon);
+                }
+                else if (keyboard.isKeyPressed('3')) {
+                    player.switchWeapon(now, missileLauncher);
+                }
 
-            if (mouse.leftMouseDown) {
-                player.weapon.fire(now, mouse.x, mouse.y);
-            }
-            else {
-                player.weapon.updateNotFiring(now, mouse.x, mouse.y);
+                if (mouse.leftMouseDown) {
+                    player.weapon.fire(now, mouse.x, mouse.y);
+                }
+                else {
+                    player.weapon.updateNotFiring(now, mouse.x, mouse.y);
+                }
             }
 
             // Update everything
@@ -194,6 +196,13 @@ export default class Game {
 
             for (const gameObject of this.gameObjects) {
                 gameObject.draw(ctx);
+            }
+
+            if (!player.isAlive) {
+                ctx.fillStyle = '#FF0000';
+                ctx.font = '48pt monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText("lol u ded", canvas.width / 2, canvas.height / 2);
             }
 
             // Wait for next frame
