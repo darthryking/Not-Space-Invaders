@@ -24,6 +24,7 @@ export const ALIEN_LASER_GUN_BULLET_DAMAGE = 1; // hitpoints
 export const BEAM_CANNON_BEAM_WIDTH = 2; // px
 export const BEAM_CANNON_BEAM_LENGTH = 99999;
 export const BEAM_CANNON_BEAM_COLOR = '#00FFFF';
+export const BEAM_CANNON_DAMAGE = 0.01; // Base damage per frame
 
 /* Missile Launcher */
 export const MISSILE_LAUNCHER_MISSILE_SPEED = 10; // px per frame

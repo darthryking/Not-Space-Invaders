@@ -1,5 +1,6 @@
 import {
-    dist
+    distance,
+    pointBelowLine,
 }
 from './utils.js';
 import GameObject, {
@@ -10,6 +11,7 @@ import {
     BEAM_CANNON_BEAM_WIDTH,
     BEAM_CANNON_BEAM_LENGTH,
     BEAM_CANNON_BEAM_COLOR,
+    BEAM_CANNON_DAMAGE,
     DEBUG_SHOW_FIRE_POS,
 }
 from './configs.js';
@@ -167,9 +169,26 @@ export class BeamCannon extends Weapon {
         }
 
         const [firePosX, firePosY] = this.owner.getFirePos();
+
+        const [beamHitTarget, distToTarget] = this.#findBeamHitTarget(
+            firePosX, firePosY,
+            aimX, aimY,
+        );
+
+        let beamLen;
+
+        if (beamHitTarget !== null) {
+            beamLen = distToTarget;
+            beamHitTarget.takeDamage(this, BEAM_CANNON_DAMAGE);
+        }
+        else {
+            beamLen = BEAM_CANNON_BEAM_LENGTH;
+        }
+
         const [beamEndX, beamEndY] = this.#calculateBeamEndPos(
             firePosX, firePosY,
             aimX, aimY,
+            beamLen,
         );
 
         this.#beamEndX = beamEndX;
@@ -190,17 +209,58 @@ export class BeamCannon extends Weapon {
         }
     }
 
-    #calculateBeamEndPos(firePosX, firePosY, aimX, aimY) {
+    #findBeamHitTarget(firePosX, firePosY, aimX, aimY) {
+        let closestTarget = null;
+        let closestTargetDist = Infinity;
+
+        for (const gameObject of this.game.getActiveGameObjects()) {
+            if (!(gameObject instanceof CombatCharacter)) {
+                continue;
+            }
+
+            if (this.owner.likes(gameObject)) {
+                continue;
+            }
+
+            let pointsBelowLine = 0;
+            let pointsAboveLine = 0;
+
+            for (const [x, y] of gameObject.getCorners()) {
+                if (pointBelowLine(x, y, firePosX, firePosY, aimX, aimY)) {
+                    pointsBelowLine++;
+                }
+                else {
+                    pointsAboveLine++;
+                }
+            }
+
+            if (pointsBelowLine < 4 && pointsAboveLine < 4) {
+                const distToTarget = distance(
+                    firePosX, firePosY,
+                    gameObject.getCenterX(), gameObject.getCenterY(),
+                );
+
+                if (distToTarget < closestTargetDist) {
+                    closestTarget = gameObject;
+                    closestTargetDist = distToTarget;
+                }
+            }
+        }
+
+        return [closestTarget, closestTargetDist];
+    }
+
+    #calculateBeamEndPos(firePosX, firePosY, aimX, aimY, beamLen) {
         const dX = aimX - firePosX;
         const dY = aimY - firePosY;
 
         const hypotenuse = Math.sqrt(dX * dX + dY * dY);
         if (hypotenuse == 0) {
-            return [0, -BEAM_CANNON_BEAM_LENGTH];
+            return [0, -beamLen];
         }
 
-        const beamEndX = (dX / hypotenuse) * BEAM_CANNON_BEAM_LENGTH;
-        const beamEndY = (dY / hypotenuse) * BEAM_CANNON_BEAM_LENGTH;
+        const beamEndX = firePosX + (dX / hypotenuse) * beamLen;
+        const beamEndY = firePosY + (dY / hypotenuse) * beamLen;
 
         return [beamEndX, beamEndY];
     }

@@ -69,6 +69,15 @@ export class Sprite extends GameObject {
         return [this.getCenterX(), this.getCenterY()];
     }
 
+    getCorners() {
+        return [
+            [this.getLeft(), this.getTop()],
+            [this.getRight(), this.getTop()],
+            [this.getLeft(), this.getBottom()],
+            [this.getRight(), this.getBottom()],
+        ];
+    }
+
     update(now) {
         for (const gameObject of this.game.getActiveGameObjects()) {
             if (gameObject !== this &&
