@@ -127,6 +127,12 @@ export default class Game {
             240, 10,
             13, 26,
         );
+        await this.assets.loadBitmap(
+            'explosion',
+            'assets/bullets_spritesheet.png',
+            16, 106,
+            13, 13,
+        );
 
         // Initialize the player
         const player = this.addGameObject(new Player(this, 'player', 0, 0));

@@ -12,6 +12,9 @@ import {
     BEAM_CANNON_BEAM_LENGTH,
     BEAM_CANNON_BEAM_COLOR,
     BEAM_CANNON_DAMAGE,
+    MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS,
+    MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE,
+    MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION,
     DEBUG_SHOW_FIRE_POS,
 }
 from './configs.js';
@@ -329,13 +332,12 @@ export class MissileLauncher extends Weapon {
 }
 
 export class Projectile extends Sprite {
-    constructor(game, owner, bitmapName, x, y, vX, vY, damage) {
+    constructor(game, owner, bitmapName, x, y, vX, vY) {
         super(game, bitmapName, x, y);
 
         this.vX = vX;
         this.vY = vY;
 
-        this.damage = damage;
         this.owner = owner;
     }
 
@@ -367,7 +369,9 @@ export class Projectile extends Sprite {
 
 export class Bullet extends Projectile {
     constructor(game, owner, bitmapName, x, y, vX, vY, damage) {
-        super(game, owner, bitmapName, x, y, vX, vY, damage);
+        super(game, owner, bitmapName, x, y, vX, vY);
+
+        this.damage = damage;
     }
 
     collidesWith(otherSprite) {
@@ -388,11 +392,12 @@ export class Missile extends Projectile {
     constructor(
         game, owner, missileLauncher,
         x, y,
-        damage, speed, selfDestructDist,
+        speed, selfDestructDist,
     ) {
-        super(game, owner, 'missile', x, y, 0, 0, 0, 0, damage);
+        super(game, owner, 'missile', x, y, 0, 0, 0, 0);
 
         this.missileLauncher = missileLauncher;
+
         this.speed = speed;
         this.selfDestructDist = selfDestructDist;
     }
@@ -407,8 +412,9 @@ export class Missile extends Projectile {
 
         const [aimPosX, aimPosY] = this.getAimPos();
 
-        if (dist(this.x, this.y, aimPosX, aimPosY) <= this.selfDestructDist) {
-            this.remove();
+        const distToMouse = distance(this.x, this.y, aimPosX, aimPosY);
+        if (distToMouse <= this.selfDestructDist) {
+            this.explode();
         }
     }
 
@@ -417,9 +423,36 @@ export class Missile extends Projectile {
         this.missileLauncher.missile = null;
     }
 
+    collidesWith(otherSprite) {
+        if (!(otherSprite instanceof CombatCharacter)) {
+            return false;
+        }
+
+        return super.collidesWith(otherSprite);
+    }
+
+    onCollision(otherSprite) {
+        this.explode();
+    }
+
     getAimPos() {
         const missileLauncher = this.missileLauncher;
         return [missileLauncher.aimPosX, missileLauncher.aimPosY];
+    }
+
+    explode() {
+        this.game.addGameObject(
+            new Explosion(
+                this.game,
+                'explosion',
+                this.getCenterX(), this.getCenterY(),
+                MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS,
+                MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION,
+                MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE,
+            )
+        );
+
+        this.remove();
     }
 
     #calculateVelocity() {
@@ -438,5 +471,62 @@ export class Missile extends Projectile {
         const vY = (dY / hypotenuse) * speed;
 
         return [vX, vY];
+    }
+}
+
+export class Explosion extends Sprite {
+    constructor(game, bitmapName, centerX, centerY, radius, duration, damage) {
+        super(game, bitmapName, centerX - radius, centerY - radius);
+
+        this.radius = radius;
+
+        this.startTime = null;
+        this.duration = duration;
+
+        this.damage = damage;
+    }
+
+    getWidth() {
+        return this.radius * 2;
+    }
+
+    getHeight() {
+        return this.radius * 2;
+    }
+
+    update(now) {
+        if (this.startTime === null) {
+            this.startTime = now;
+            this.#inflictRadiusDamage();
+        }
+
+        super.update(now);
+
+        if (now - this.startTime >= this.duration) {
+            this.remove();
+        }
+    }
+
+    #inflictRadiusDamage() {
+        for (const gameObject of this.game.getActiveGameObjects()) {
+            if (!(gameObject instanceof CombatCharacter)) {
+                continue;
+            }
+
+            const pointsToCheck = gameObject.getCorners();
+            pointsToCheck.push(gameObject.getCenter());
+
+            for (const [x, y] of pointsToCheck) {
+                const dist = distance(
+                    this.getCenterX(), this.getCenterY(),
+                    x, y,
+                );
+
+                if (dist < this.radius) {
+                    gameObject.takeDamage(this, this.damage);
+                    break;
+                }
+            }
+        }
     }
 }

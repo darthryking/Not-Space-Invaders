@@ -98,7 +98,7 @@ export class Sprite extends GameObject {
         ctx.save();
         ctx.translate(this.x + halfWidth, this.y + halfHeight);
         ctx.rotate(this.angle);
-        ctx.drawImage(this.bitmap, -halfWidth, -halfHeight);
+        ctx.drawImage(this.bitmap, -halfWidth, -halfHeight, width, height);
         ctx.restore();
 
         if (DEBUG_SHOW_BOUNDING_BOXES) {
