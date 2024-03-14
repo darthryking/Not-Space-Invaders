@@ -1,22 +1,81 @@
 import {
-    dist
+    distance,
+    pointBelowLine,
 }
 from './utils.js';
 import GameObject, {
     Sprite
 }
-from './gameObjects.js'
+from './gameObjects.js';
+import {
+    BEAM_CANNON_BEAM_WIDTH,
+    BEAM_CANNON_BEAM_LENGTH,
+    BEAM_CANNON_BEAM_COLOR,
+    BEAM_CANNON_DAMAGE,
+    MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS,
+    MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE,
+    MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION,
+    DEBUG_SHOW_FIRE_POS,
+}
+from './configs.js';
 
-const BEAM_CANNON_BEAM_WIDTH = 2; // px
-const BEAM_CANNON_BEAM_LENGTH = 99999;
-const BEAM_CANNON_BEAM_COLOR = '#00FFFF';
+export class CombatCharacter extends Sprite {
+    constructor(game, bitmapName, x, y, maxHealth) {
+        super(game, bitmapName, x, y);
+
+        this.maxHealth = maxHealth;
+        this.health = maxHealth;
+
+        this.weapon = null;
+    }
+
+    draw(ctx) {
+        super.draw(ctx);
+
+        if (DEBUG_SHOW_FIRE_POS) {
+            const [firePosX, firePosY] = this.getFirePos();
+
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.ellipse(firePosX, firePosY, 5, 5, 0, Math.PI * 2, 0);
+            ctx.fill();
+        }
+    }
+
+    switchWeapon(now, weapon) {
+        if (this.weapon !== null) {
+            this.weapon.updateNotFiring(now);
+            this.weapon.owner = null;
+        }
+
+        this.weapon = weapon;
+        this.weapon.owner = this;
+
+        return weapon;
+    }
+
+    getFirePos() {
+        throw new Error(".getFirePos() not implemented!");
+    }
+
+    takeDamage(inflictor, damage) {
+        this.health -= damage;
+
+        if (this.health <= 0) {
+            this.remove();
+        }
+    }
+
+    likes(otherSprite) {
+        return otherSprite === this;
+    }
+}
 
 export class Weapon extends GameObject {
-    constructor(game, player) {
+    constructor(game) {
         super(game);
 
-        this.player = player;
-
+        this.owner = null;
         this.isFiring = false;
     }
 
@@ -32,36 +91,49 @@ export class Weapon extends GameObject {
 export class LaserGun extends Weapon {
     #nextShotTime;
 
-    constructor(game, player, rof, bulletSpeed) {
-        super(game, player);
+    constructor(game, rof, bulletBitmapName, bulletSpeed, bulletDamage) {
+        super(game);
 
         this.rof = rof;
-        this.bulletSpeed = bulletSpeed
 
-        this.#nextShotTime = 0;
+        this.bulletBitmapName = bulletBitmapName;
+        this.bulletSpeed = bulletSpeed;
+        this.bulletDamage = bulletDamage;
+
+        this.nextShotTime = 0;
     }
 
     fire(now, aimX, aimY) {
         super.fire(now, aimX, aimY);
 
-        if (now < this.#nextShotTime) {
+        if (this.owner === null) {
             return;
         }
 
-        const [firePosX, firePosY] = this.player.getFirePos();
+        if (now < this.nextShotTime) {
+            return;
+        }
+
+        const [firePosX, firePosY] = this.owner.getFirePos();
         const [vX, vY] = this.#calculateBulletVelocity(
             firePosX, firePosY,
             aimX, aimY,
         );
 
         this.game.addGameObject(
-            new Bullet(this.game, firePosX, firePosY, vX, vY)
+            new Bullet(
+                this.game, this.owner,
+                this.bulletBitmapName,
+                firePosX, firePosY,
+                vX, vY,
+                this.bulletDamage,
+            )
         );
 
-        this.#nextShotTime = now + this.#getShotIntervalMs();
+        this.nextShotTime = now + this.getShotIntervalMs();
     }
 
-    #getShotIntervalMs() {
+    getShotIntervalMs() {
         return 1000 / this.rof;
     }
 
@@ -87,21 +159,41 @@ export class BeamCannon extends Weapon {
     #beamEndX;
     #beamEndY;
 
-    constructor(game, player) {
-        super(game, player);
+    constructor(game) {
+        super(game);
 
-        const [firePosX, firePosY] = player.getFirePos();
-        this.#beamEndX = firePosX;
-        this.#beamEndY = firePosY;
+        this.#beamEndX = 0;
+        this.#beamEndY = 0;
     }
 
     fire(now, aimX, aimY) {
         super.fire(now, aimX, aimY);
 
-        const [firePosX, firePosY] = this.player.getFirePos();
+        if (this.owner === null) {
+            return;
+        }
+
+        const [firePosX, firePosY] = this.owner.getFirePos();
+
+        const [beamHitTarget, distToTarget] = this.#findBeamHitTarget(
+            firePosX, firePosY,
+            aimX, aimY,
+        );
+
+        let beamLen;
+
+        if (beamHitTarget !== null) {
+            beamLen = distToTarget;
+            beamHitTarget.takeDamage(this, BEAM_CANNON_DAMAGE);
+        }
+        else {
+            beamLen = BEAM_CANNON_BEAM_LENGTH;
+        }
+
         const [beamEndX, beamEndY] = this.#calculateBeamEndPos(
             firePosX, firePosY,
             aimX, aimY,
+            beamLen,
         );
 
         this.#beamEndX = beamEndX;
@@ -109,8 +201,8 @@ export class BeamCannon extends Weapon {
     }
 
     draw(ctx) {
-        if (this.isFiring) {
-            const [firePosX, firePosY] = this.player.getFirePos();
+        if (this.isFiring && this.owner !== null) {
+            const [firePosX, firePosY] = this.owner.getFirePos();
 
             ctx.strokeStyle = BEAM_CANNON_BEAM_COLOR;
             ctx.lineWidth = BEAM_CANNON_BEAM_WIDTH;
@@ -122,25 +214,66 @@ export class BeamCannon extends Weapon {
         }
     }
 
-    #calculateBeamEndPos(firePosX, firePosY, aimX, aimY) {
+    #findBeamHitTarget(firePosX, firePosY, aimX, aimY) {
+        let closestTarget = null;
+        let closestTargetDist = Infinity;
+
+        for (const gameObject of this.game.getActiveGameObjects()) {
+            if (!(gameObject instanceof CombatCharacter)) {
+                continue;
+            }
+
+            if (this.owner.likes(gameObject)) {
+                continue;
+            }
+
+            let pointsBelowLine = 0;
+            let pointsAboveLine = 0;
+
+            for (const [x, y] of gameObject.getCorners()) {
+                if (pointBelowLine(x, y, firePosX, firePosY, aimX, aimY)) {
+                    pointsBelowLine++;
+                }
+                else {
+                    pointsAboveLine++;
+                }
+            }
+
+            if (pointsBelowLine < 4 && pointsAboveLine < 4) {
+                const distToTarget = distance(
+                    firePosX, firePosY,
+                    gameObject.getCenterX(), gameObject.getCenterY(),
+                );
+
+                if (distToTarget < closestTargetDist) {
+                    closestTarget = gameObject;
+                    closestTargetDist = distToTarget;
+                }
+            }
+        }
+
+        return [closestTarget, closestTargetDist];
+    }
+
+    #calculateBeamEndPos(firePosX, firePosY, aimX, aimY, beamLen) {
         const dX = aimX - firePosX;
         const dY = aimY - firePosY;
 
         const hypotenuse = Math.sqrt(dX * dX + dY * dY);
         if (hypotenuse == 0) {
-            return [0, -BEAM_CANNON_BEAM_LENGTH];
+            return [0, -beamLen];
         }
 
-        const beamEndX = (dX / hypotenuse) * BEAM_CANNON_BEAM_LENGTH;
-        const beamEndY = (dY / hypotenuse) * BEAM_CANNON_BEAM_LENGTH;
+        const beamEndX = firePosX + (dX / hypotenuse) * beamLen;
+        const beamEndY = firePosY + (dY / hypotenuse) * beamLen;
 
         return [beamEndX, beamEndY];
     }
 }
 
 export class MissileLauncher extends Weapon {
-    constructor(game, player, missileSpeed, missileSelfDestructDist) {
-        super(game, player);
+    constructor(game, missileSpeed, missileSelfDestructDist) {
+        super(game);
 
         this.missileSpeed = missileSpeed;
         this.missileSelfDestructDist = missileSelfDestructDist;
@@ -154,11 +287,11 @@ export class MissileLauncher extends Weapon {
     fire(now, aimX, aimY) {
         super.fire(now, aimX, aimY);
 
-        if (this.missile === null) {
-            const [firePosX, firePosY] = this.player.getFirePos();
+        if (this.missile === null && this.owner !== null) {
+            const [firePosX, firePosY] = this.owner.getFirePos();
             this.missile = this.game.addGameObject(
                 new Missile(
-                    this.game, this,
+                    this.game, this.owner, this,
                     firePosX, firePosY,
                     this.missileSpeed,
                     this.missileSelfDestructDist,
@@ -199,11 +332,13 @@ export class MissileLauncher extends Weapon {
 }
 
 export class Projectile extends Sprite {
-    constructor(game, bitmapName, x, y, vX, vY) {
+    constructor(game, owner, bitmapName, x, y, vX, vY) {
         super(game, bitmapName, x, y);
 
         this.vX = vX;
         this.vY = vY;
+
+        this.owner = owner;
     }
 
     update(now) {
@@ -215,23 +350,54 @@ export class Projectile extends Sprite {
 
         if (!this.isOnScreen()) {
             this.remove();
+            return;
         }
 
         this.angle = Math.atan2(vY, vX) + Math.PI / 2;
+
+        super.update(now);
+    }
+
+    collidesWith(otherSprite) {
+        if (this.owner.likes(otherSprite)) {
+            return false;
+        }
+
+        return super.collidesWith(otherSprite);
     }
 }
 
 export class Bullet extends Projectile {
-    constructor(game, x, y, vX, vY) {
-        super(game, 'bullet', x, y, vX, vY);
+    constructor(game, owner, bitmapName, x, y, vX, vY, damage) {
+        super(game, owner, bitmapName, x, y, vX, vY);
+
+        this.damage = damage;
+    }
+
+    collidesWith(otherSprite) {
+        if (!(otherSprite instanceof CombatCharacter)) {
+            return false;
+        }
+
+        return super.collidesWith(otherSprite);
+    }
+
+    onCollision(otherSprite) {
+        otherSprite.takeDamage(this, this.damage);
+        this.remove();
     }
 }
 
 export class Missile extends Projectile {
-    constructor(game, missileLauncher, x, y, speed, selfDestructDist) {
-        super(game, 'missile', x, y, 0, 0, 0, 0);
+    constructor(
+        game, owner, missileLauncher,
+        x, y,
+        speed, selfDestructDist,
+    ) {
+        super(game, owner, 'missile', x, y, 0, 0, 0, 0);
 
         this.missileLauncher = missileLauncher;
+
         this.speed = speed;
         this.selfDestructDist = selfDestructDist;
     }
@@ -246,8 +412,9 @@ export class Missile extends Projectile {
 
         const [aimPosX, aimPosY] = this.getAimPos();
 
-        if (dist(this.x, this.y, aimPosX, aimPosY) <= this.selfDestructDist) {
-            this.remove();
+        const distToMouse = distance(this.x, this.y, aimPosX, aimPosY);
+        if (distToMouse <= this.selfDestructDist) {
+            this.explode();
         }
     }
 
@@ -256,9 +423,36 @@ export class Missile extends Projectile {
         this.missileLauncher.missile = null;
     }
 
+    collidesWith(otherSprite) {
+        if (!(otherSprite instanceof CombatCharacter)) {
+            return false;
+        }
+
+        return super.collidesWith(otherSprite);
+    }
+
+    onCollision(otherSprite) {
+        this.explode();
+    }
+
     getAimPos() {
         const missileLauncher = this.missileLauncher;
         return [missileLauncher.aimPosX, missileLauncher.aimPosY];
+    }
+
+    explode() {
+        this.game.addGameObject(
+            new Explosion(
+                this.game,
+                'explosion',
+                this.getCenterX(), this.getCenterY(),
+                MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS,
+                MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION,
+                MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE,
+            )
+        );
+
+        this.remove();
     }
 
     #calculateVelocity() {
@@ -277,5 +471,62 @@ export class Missile extends Projectile {
         const vY = (dY / hypotenuse) * speed;
 
         return [vX, vY];
+    }
+}
+
+export class Explosion extends Sprite {
+    constructor(game, bitmapName, centerX, centerY, radius, duration, damage) {
+        super(game, bitmapName, centerX - radius, centerY - radius);
+
+        this.radius = radius;
+
+        this.startTime = null;
+        this.duration = duration;
+
+        this.damage = damage;
+    }
+
+    getWidth() {
+        return this.radius * 2;
+    }
+
+    getHeight() {
+        return this.radius * 2;
+    }
+
+    update(now) {
+        if (this.startTime === null) {
+            this.startTime = now;
+            this.#inflictRadiusDamage();
+        }
+
+        super.update(now);
+
+        if (now - this.startTime >= this.duration) {
+            this.remove();
+        }
+    }
+
+    #inflictRadiusDamage() {
+        for (const gameObject of this.game.getActiveGameObjects()) {
+            if (!(gameObject instanceof CombatCharacter)) {
+                continue;
+            }
+
+            const pointsToCheck = gameObject.getCorners();
+            pointsToCheck.push(gameObject.getCenter());
+
+            for (const [x, y] of pointsToCheck) {
+                const dist = distance(
+                    this.getCenterX(), this.getCenterY(),
+                    x, y,
+                );
+
+                if (dist < this.radius) {
+                    gameObject.takeDamage(this, this.damage);
+                    break;
+                }
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 import {
-    sleep
+    sleep,
+    randRange,
 }
 from './utils.js';
 import AssetManager from './assets.js';
@@ -15,19 +16,20 @@ import {
     MissileLauncher,
 }
 from './weapons.js';
-
-const FRAMERATE = 60; // FPS
-const FRAME_INTERVAL = 1000 / FRAMERATE; // ms per frame
-
-const PLAYER_SPEED = 5; // Pixels per frame
-
-const LASER_GUN_ROF = 3; // Shots per second
-const LASER_GUN_BULLET_SPEED = 10; // px per frame
-
-const MISSILE_LAUNCHER_MISSILE_SPEED = 10; // px per frame
-
-// Distance to the mouse that the missile will explode, in px
-const MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST = 10;
+import {
+    Alien,
+    ShieldedAlien,
+}
+from './enemies.js';
+import {
+    FRAME_INTERVAL,
+    PLAYER_LASER_GUN_ROF,
+    PLAYER_LASER_GUN_BULLET_SPEED,
+    PLAYER_LASER_GUN_BULLET_DAMAGE,
+    MISSILE_LAUNCHER_MISSILE_SPEED,
+    MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST,
+}
+from './configs.js';
 
 export default class Game {
     constructor() {
@@ -84,10 +86,40 @@ export default class Game {
             69, 71,
         );
         await this.assets.loadBitmap(
+            'alien',
+            'assets/spaceships_spritesheet.png',
+            24, 19,
+            67, 80,
+        );
+        await this.assets.loadBitmap(
+            'alien_2',
+            'assets/spaceships_spritesheet.png',
+            138, 17,
+            67, 81,
+        );
+        await this.assets.loadBitmap(
+            'shield',
+            'assets/spaceships_spritesheet.png',
+            798, 344,
+            114, 113,
+        );
+        await this.assets.loadBitmap(
             'bullet',
+            'assets/bullets_spritesheet.png',
+            61, 106,
+            13, 13,
+        );
+        await this.assets.loadBitmap(
+            'alien_bullet',
             'assets/bullets_spritesheet.png',
             153, 57,
             8, 21,
+        );
+        await this.assets.loadBitmap(
+            'alien_bullet_2',
+            'assets/bullets_spritesheet.png',
+            61, 57,
+            12, 21,
         );
         await this.assets.loadBitmap(
             'missile',
@@ -95,38 +127,58 @@ export default class Game {
             240, 10,
             13, 26,
         );
+        await this.assets.loadBitmap(
+            'explosion',
+            'assets/bullets_spritesheet.png',
+            16, 106,
+            13, 13,
+        );
 
         // Initialize the player
-        const player = this.addGameObject(
-            new Player(this, 'player', 0, 0, PLAYER_SPEED)
-        );
+        const player = this.addGameObject(new Player(this, 'player', 0, 0));
         player.x = canvas.width / 2 - player.getWidth() / 2;
         player.y = canvas.height - player.getHeight();
 
         // Initialize the player's weapons
         const laserGun = this.addGameObject(
             new LaserGun(
-                this, player,
-                LASER_GUN_ROF,
-                LASER_GUN_BULLET_SPEED,
+                this,
+                PLAYER_LASER_GUN_ROF,
+                'bullet',
+                PLAYER_LASER_GUN_BULLET_SPEED,
+                PLAYER_LASER_GUN_BULLET_DAMAGE,
             )
         );
         const beamCannon = this.addGameObject(
-            new BeamCannon(this, player)
+            new BeamCannon(this)
         );
         const missileLauncher = this.addGameObject(
             new MissileLauncher(
-                this, player,
+                this,
                 MISSILE_LAUNCHER_MISSILE_SPEED,
                 MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST,
             )
         );
 
-        let currentWeapon = laserGun;
-        const switchWeapon = (now, weapon) => {
-            currentWeapon.updateNotFiring(now);
-            currentWeapon = weapon;
-        };
+        player.switchWeapon(0, laserGun);
+
+        // Enemies
+        const enemies = [
+            new Alien(this, 100, 0),
+            new Alien(this, 200, 0),
+            new Alien(this, 300, 0),
+            new Alien(this, 400, 0),
+            new Alien(this, 500, 0),
+            new ShieldedAlien(this, 50, 100),
+            new ShieldedAlien(this, 150, 100),
+            new ShieldedAlien(this, 250, 100),
+            new ShieldedAlien(this, 350, 100),
+            new ShieldedAlien(this, 450, 100),
+            new ShieldedAlien(this, 550, 100),
+        ];
+        for (const enemy of enemies) {
+            this.addGameObject(enemy);
+        }
 
         // Main loop
         while (true) {
@@ -134,32 +186,34 @@ export default class Game {
             const nextFrameTime = now + FRAME_INTERVAL;
 
             // Handle player input
-            if (keyboard.isKeyPressed('a') ||
-                keyboard.isKeyPressed('ArrowLeft')) {
-                player.moveLeft();
-                player.clampToBounds(0, canvas.width);
-            }
-            else if (keyboard.isKeyPressed('d') ||
-                keyboard.isKeyPressed('ArrowRight')) {
-                player.moveRight();
-                player.clampToBounds(0, canvas.width);
-            }
+            if (player.isAlive) {
+                if (keyboard.isKeyPressed('a') ||
+                    keyboard.isKeyPressed('ArrowLeft')) {
+                    player.moveLeft();
+                    player.clampToBounds(0, canvas.width);
+                }
+                else if (keyboard.isKeyPressed('d') ||
+                    keyboard.isKeyPressed('ArrowRight')) {
+                    player.moveRight();
+                    player.clampToBounds(0, canvas.width);
+                }
 
-            if (keyboard.isKeyPressed('1')) {
-                switchWeapon(now, laserGun);
-            }
-            else if (keyboard.isKeyPressed('2')) {
-                switchWeapon(now, beamCannon);
-            }
-            else if (keyboard.isKeyPressed('3')) {
-                switchWeapon(now, missileLauncher);
-            }
+                if (keyboard.isKeyPressed('1')) {
+                    player.switchWeapon(now, laserGun);
+                }
+                else if (keyboard.isKeyPressed('2')) {
+                    player.switchWeapon(now, beamCannon);
+                }
+                else if (keyboard.isKeyPressed('3')) {
+                    player.switchWeapon(now, missileLauncher);
+                }
 
-            if (mouse.leftMouseDown) {
-                currentWeapon.fire(now, mouse.x, mouse.y);
-            }
-            else {
-                currentWeapon.updateNotFiring(now, mouse.x, mouse.y);
+                if (mouse.leftMouseDown) {
+                    player.weapon.fire(now, mouse.x, mouse.y);
+                }
+                else {
+                    player.weapon.updateNotFiring(now, mouse.x, mouse.y);
+                }
             }
 
             // Update everything
@@ -174,6 +228,13 @@ export default class Game {
 
             for (const gameObject of this.gameObjects) {
                 gameObject.draw(ctx);
+            }
+
+            if (!player.isAlive) {
+                ctx.fillStyle = '#FF0000';
+                ctx.font = '48pt monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText("lol u ded", canvas.width / 2, canvas.height / 2);
             }
 
             // Wait for next frame

@@ -1,3 +1,8 @@
+import {
+    DEBUG_SHOW_BOUNDING_BOXES
+}
+from './configs.js'
+
 export default class GameObject {
     constructor(game) {
         this.game = game;
@@ -64,12 +69,42 @@ export class Sprite extends GameObject {
         return [this.getCenterX(), this.getCenterY()];
     }
 
+    getCorners() {
+        return [
+            [this.getLeft(), this.getTop()],
+            [this.getRight(), this.getTop()],
+            [this.getLeft(), this.getBottom()],
+            [this.getRight(), this.getBottom()],
+        ];
+    }
+
+    update(now) {
+        for (const gameObject of this.game.getActiveGameObjects()) {
+            if (gameObject !== this &&
+                gameObject instanceof Sprite &&
+                this.collidesWith(gameObject)) {
+                this.onCollision(gameObject);
+            }
+        }
+    }
+
     draw(ctx) {
+        const width = this.getWidth();
+        const height = this.getHeight();
+
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
+
         ctx.save();
-        ctx.translate(this.x, this.y);
+        ctx.translate(this.x + halfWidth, this.y + halfHeight);
         ctx.rotate(this.angle);
-        ctx.drawImage(this.bitmap, 0, 0);
+        ctx.drawImage(this.bitmap, -halfWidth, -halfHeight, width, height);
         ctx.restore();
+
+        if (DEBUG_SHOW_BOUNDING_BOXES) {
+            ctx.strokeStyle = '#FF0000';
+            ctx.strokeRect(this.x, this.y, width, height);
+        }
     }
 
     isOnScreen() {
@@ -92,5 +127,29 @@ export class Sprite extends GameObject {
         }
 
         return true;
+    }
+
+    collidesWith(otherSprite) {
+        if (this.getRight() < otherSprite.getLeft()) {
+            return false;
+        }
+
+        if (this.getLeft() > otherSprite.getRight()) {
+            return false;
+        }
+
+        if (this.getTop() > otherSprite.getBottom()) {
+            return false;
+        }
+
+        if (this.getBottom() < otherSprite.getTop()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    onCollision(otherSprite) {
+        // no-op
     }
 }
