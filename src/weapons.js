@@ -55,7 +55,7 @@ export class CombatCharacter extends Sprite {
         throw new Error(".getFirePos() not implemented!");
     }
 
-    takeDamage(damage) {
+    takeDamage(inflictor, damage) {
         this.health -= damage;
 
         if (this.health <= 0) {
@@ -88,11 +88,12 @@ export class Weapon extends GameObject {
 export class LaserGun extends Weapon {
     #nextShotTime;
 
-    constructor(game, rof, bulletSpeed, bulletDamage) {
+    constructor(game, rof, bulletBitmapName, bulletSpeed, bulletDamage) {
         super(game);
 
         this.rof = rof;
 
+        this.bulletBitmapName = bulletBitmapName;
         this.bulletSpeed = bulletSpeed;
         this.bulletDamage = bulletDamage;
 
@@ -119,6 +120,7 @@ export class LaserGun extends Weapon {
         this.game.addGameObject(
             new Bullet(
                 this.game, this.owner,
+                this.bulletBitmapName,
                 firePosX, firePosY,
                 vX, vY,
                 this.bulletDamage,
@@ -364,15 +366,21 @@ export class Projectile extends Sprite {
 }
 
 export class Bullet extends Projectile {
-    constructor(game, owner, x, y, vX, vY, damage) {
-        super(game, owner, 'bullet', x, y, vX, vY, damage);
+    constructor(game, owner, bitmapName, x, y, vX, vY, damage) {
+        super(game, owner, bitmapName, x, y, vX, vY, damage);
+    }
+
+    collidesWith(otherSprite) {
+        if (!(otherSprite instanceof CombatCharacter)) {
+            return false;
+        }
+
+        return super.collidesWith(otherSprite);
     }
 
     onCollision(otherSprite) {
-        if (otherSprite instanceof CombatCharacter) {
-            otherSprite.takeDamage(this.damage);
-            this.remove();
-        }
+        otherSprite.takeDamage(this, this.damage);
+        this.remove();
     }
 }
 

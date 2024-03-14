@@ -17,7 +17,8 @@ import {
 }
 from './weapons.js';
 import {
-    Alien
+    Alien,
+    ShieldedAlien,
 }
 from './enemies.js';
 import {
@@ -87,14 +88,38 @@ export default class Game {
         await this.assets.loadBitmap(
             'alien',
             'assets/spaceships_spritesheet.png',
-            820, 22,
-            69, 71,
+            24, 19,
+            67, 80,
+        );
+        await this.assets.loadBitmap(
+            'alien_2',
+            'assets/spaceships_spritesheet.png',
+            138, 17,
+            67, 81,
+        );
+        await this.assets.loadBitmap(
+            'shield',
+            'assets/spaceships_spritesheet.png',
+            798, 344,
+            114, 113,
         );
         await this.assets.loadBitmap(
             'bullet',
             'assets/bullets_spritesheet.png',
+            61, 106,
+            13, 13,
+        );
+        await this.assets.loadBitmap(
+            'alien_bullet',
+            'assets/bullets_spritesheet.png',
             153, 57,
             8, 21,
+        );
+        await this.assets.loadBitmap(
+            'alien_bullet_2',
+            'assets/bullets_spritesheet.png',
+            61, 57,
+            12, 21,
         );
         await this.assets.loadBitmap(
             'missile',
@@ -113,6 +138,7 @@ export default class Game {
             new LaserGun(
                 this,
                 PLAYER_LASER_GUN_ROF,
+                'bullet',
                 PLAYER_LASER_GUN_BULLET_SPEED,
                 PLAYER_LASER_GUN_BULLET_DAMAGE,
             )
@@ -132,17 +158,17 @@ export default class Game {
 
         // Enemies
         const enemies = [
-            new Alien(this, 0, 0),
             new Alien(this, 100, 0),
             new Alien(this, 200, 0),
             new Alien(this, 300, 0),
             new Alien(this, 400, 0),
             new Alien(this, 500, 0),
-            new Alien(this, 50, 100),
-            new Alien(this, 150, 100),
-            new Alien(this, 250, 100),
-            new Alien(this, 350, 100),
-            new Alien(this, 450, 100),
+            new ShieldedAlien(this, 50, 100),
+            new ShieldedAlien(this, 150, 100),
+            new ShieldedAlien(this, 250, 100),
+            new ShieldedAlien(this, 350, 100),
+            new ShieldedAlien(this, 450, 100),
+            new ShieldedAlien(this, 550, 100),
         ];
         for (const enemy of enemies) {
             this.addGameObject(enemy);
