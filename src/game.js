@@ -234,7 +234,7 @@ export default class Game {
 
             if (!player.isAlive) {
                 ctx.fillStyle = '#FF0000';
-                ctx.font = '48pt monospace';
+                ctx.font = '48pt sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText("lol u ded", canvas.width / 2, canvas.height / 2);
             }
