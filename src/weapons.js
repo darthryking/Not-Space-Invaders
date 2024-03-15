@@ -8,9 +8,7 @@ import GameObject, {
 }
 from './gameObjects.js';
 import {
-    BEAM_CANNON_BEAM_WIDTH,
     BEAM_CANNON_BEAM_LENGTH,
-    BEAM_CANNON_BEAM_COLOR,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION,
@@ -175,9 +173,11 @@ export class BeamCannon extends Weapon {
     #beamEndX;
     #beamEndY;
 
-    constructor(game, damage) {
+    constructor(game, width, color, damage) {
         super(game);
 
+        this.width = width;
+        this.color = color;
         this.damage = damage;
 
         this.#beamEndX = 0;
@@ -213,12 +213,14 @@ export class BeamCannon extends Weapon {
         if (this.isFiring && this.owner !== null) {
             const [firePosX, firePosY] = this.owner.getFirePos();
 
-            ctx.strokeStyle = BEAM_CANNON_BEAM_COLOR;
-            ctx.lineWidth = BEAM_CANNON_BEAM_WIDTH;
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = this.width;
+            ctx.lineJoin = 'round';
 
             ctx.beginPath();
             ctx.moveTo(firePosX, firePosY);
             ctx.lineTo(this.#beamEndX, this.#beamEndY);
+            ctx.lineTo(firePosX, firePosY);
             ctx.stroke();
         }
     }

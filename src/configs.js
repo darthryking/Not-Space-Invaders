@@ -34,12 +34,14 @@ export const ALIEN_LASER_GUN_BULLET_SPEED = 10; // px per frame
 export const ALIEN_LASER_GUN_BULLET_DAMAGE = 1; // hitpoints
 
 /* Beam Cannon */
-export const BEAM_CANNON_BEAM_WIDTH = 2; // px
 export const BEAM_CANNON_BEAM_LENGTH = 99999;
-export const BEAM_CANNON_BEAM_COLOR = '#00FFFF';
 export const BEAM_CANNON_SHIELD_DAMAGE_MULTIPLIER = 50;
-export const PLAYER_BEAM_CANNON_DAMAGE = 0.01; // Base damage per frame
-export const UFO_BEAM_CANNON_DAMAGE = 0.5; // Base damage per frame
+export const PLAYER_BEAM_CANNON_BEAM_WIDTH = 2; // px
+export const PLAYER_BEAM_CANNON_BEAM_COLOR = '#FF0000';
+export const PLAYER_BEAM_CANNON_BEAM_DAMAGE = 0.01; // Base damage per frame
+export const UFO_BEAM_CANNON_BEAM_WIDTH = 30; // px
+export const UFO_BEAM_CANNON_BEAM_COLOR = '#00FFFF';
+export const UFO_BEAM_CANNON_BEAM_DAMAGE = 0.5; // Base damage per frame
 
 /* Missile Launcher */
 export const MISSILE_LAUNCHER_MISSILE_SPEED = 10; // px per frame

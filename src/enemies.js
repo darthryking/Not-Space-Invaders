@@ -17,7 +17,9 @@ import {
     UFO_SPRITE_SCALE,
     UFO_SPEED,
     UFO_MAX_HEALTH,
-    UFO_BEAM_CANNON_DAMAGE,
+    UFO_BEAM_CANNON_BEAM_COLOR,
+    UFO_BEAM_CANNON_BEAM_WIDTH,
+    UFO_BEAM_CANNON_BEAM_DAMAGE,
     UFO_BEAM_MIN_BURST_INTERVAL,
     UFO_BEAM_MAX_BURST_INTERVAL,
     UFO_BEAM_MIN_BURST_TIME,
@@ -258,7 +260,12 @@ export class UFO extends Enemy {
 
     #initWeapon() {
         const weapon = this.game.addGameObject(
-            new BeamCannon(this.game, UFO_BEAM_CANNON_DAMAGE)
+            new BeamCannon(
+                this.game,
+                UFO_BEAM_CANNON_BEAM_WIDTH,
+                UFO_BEAM_CANNON_BEAM_COLOR,
+                UFO_BEAM_CANNON_BEAM_DAMAGE,
+            )
         );
 
         this.switchWeapon(weapon);

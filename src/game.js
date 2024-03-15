@@ -27,7 +27,9 @@ import {
     PLAYER_LASER_GUN_ROF,
     PLAYER_LASER_GUN_BULLET_SPEED,
     PLAYER_LASER_GUN_BULLET_DAMAGE,
-    PLAYER_BEAM_CANNON_DAMAGE,
+    PLAYER_BEAM_CANNON_BEAM_COLOR,
+    PLAYER_BEAM_CANNON_BEAM_WIDTH,
+    PLAYER_BEAM_CANNON_BEAM_DAMAGE,
     MISSILE_LAUNCHER_MISSILE_SPEED,
     MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST,
 }
@@ -160,7 +162,12 @@ export default class Game {
             )
         );
         const beamCannon = this.addGameObject(
-            new BeamCannon(this, PLAYER_BEAM_CANNON_DAMAGE)
+            new BeamCannon(
+                this,
+                PLAYER_BEAM_CANNON_BEAM_WIDTH,
+                PLAYER_BEAM_CANNON_BEAM_COLOR,
+                PLAYER_BEAM_CANNON_BEAM_DAMAGE,
+            )
         );
         const missileLauncher = this.addGameObject(
             new MissileLauncher(
