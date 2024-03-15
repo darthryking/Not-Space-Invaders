@@ -236,7 +236,9 @@ export default class Game {
 
             // Update everything
             for (const gameObject of this.gameObjects) {
-                gameObject.update();
+                if (gameObject.isAlive) {
+                    gameObject.update();
+                }
             }
             this.cleanUpGameObjects();
 
