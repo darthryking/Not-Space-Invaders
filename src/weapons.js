@@ -11,7 +11,6 @@ import {
     BEAM_CANNON_BEAM_WIDTH,
     BEAM_CANNON_BEAM_LENGTH,
     BEAM_CANNON_BEAM_COLOR,
-    BEAM_CANNON_DAMAGE,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION,
@@ -176,8 +175,10 @@ export class BeamCannon extends Weapon {
     #beamEndX;
     #beamEndY;
 
-    constructor(game) {
+    constructor(game, damage) {
         super(game);
+
+        this.damage = damage;
 
         this.#beamEndX = 0;
         this.#beamEndY = 0;
@@ -196,7 +197,7 @@ export class BeamCannon extends Weapon {
 
         if (beamHitTarget !== null) {
             beamLen = distToTarget;
-            beamHitTarget.takeDamage(this, BEAM_CANNON_DAMAGE);
+            beamHitTarget.takeDamage(this, this.damage);
         }
         else {
             beamLen = BEAM_CANNON_BEAM_LENGTH;
