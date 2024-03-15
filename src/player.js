@@ -17,15 +17,20 @@ export default class Player extends CombatCharacter {
 
     moveLeft() {
         this.x -= this.speed;
+
+        if (this.x <= 0) {
+            this.x = 0;
+        }
     }
 
     moveRight() {
         this.x += this.speed;
-    }
 
-    clampToBounds(left, right) {
-        this.x = Math.max(this.x, left);
-        this.x = Math.min(this.x, right - this.getWidth());
+        const canvasWidth = this.game.canvas.width;
+
+        if (this.getRight() > canvasWidth) {
+            this.x = canvasWidth - this.getWidth();
+        }
     }
 
     getFirePos() {

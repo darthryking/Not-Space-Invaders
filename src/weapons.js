@@ -42,14 +42,22 @@ export class CombatCharacter extends Sprite {
         }
     }
 
-    switchWeapon(now, weapon) {
+    remove() {
+        this.switchWeapon(null);
+        super.remove();
+    }
+
+    switchWeapon(weapon) {
         if (this.weapon !== null) {
-            this.weapon.updateNotFiring(now);
+            this.weapon.updateNotFiring();
             this.weapon.owner = null;
         }
 
         this.weapon = weapon;
-        this.weapon.owner = this;
+
+        if (this.weapon !== null) {
+            this.weapon.owner = this;
+        }
 
         return weapon;
     }
@@ -77,13 +85,21 @@ export class Weapon extends GameObject {
 
         this.owner = null;
         this.isFiring = false;
+
+        this.aimPosX = 0;
+        this.aimPosY = 0;
     }
 
-    fire(now, aimX, aimY) {
+    aimAt(aimPosX, aimPosY) {
+        this.aimPosX = aimPosX;
+        this.aimPosY = aimPosY;
+    }
+
+    fire() {
         this.isFiring = true;
     }
 
-    updateNotFiring(now, aimX, aimY) {
+    updateNotFiring() {
         this.isFiring = false;
     }
 }
@@ -103,22 +119,21 @@ export class LaserGun extends Weapon {
         this.nextShotTime = 0;
     }
 
-    fire(now, aimX, aimY) {
-        super.fire(now, aimX, aimY);
+    fire() {
+        super.fire();
 
         if (this.owner === null) {
             return;
         }
+
+        const now = this.game.now;
 
         if (now < this.nextShotTime) {
             return;
         }
 
         const [firePosX, firePosY] = this.owner.getFirePos();
-        const [vX, vY] = this.#calculateBulletVelocity(
-            firePosX, firePosY,
-            aimX, aimY,
-        );
+        const [vX, vY] = this.#calculateBulletVelocity();
 
         this.game.addGameObject(
             new Bullet(
@@ -137,11 +152,13 @@ export class LaserGun extends Weapon {
         return 1000 / this.rof;
     }
 
-    #calculateBulletVelocity(firePosX, firePosY, aimX, aimY) {
+    #calculateBulletVelocity() {
+        const [firePosX, firePosY] = this.owner.getFirePos();
+
         const bulletSpeed = this.bulletSpeed;
 
-        const dX = aimX - firePosX;
-        const dY = aimY - firePosY;
+        const dX = this.aimPosX - firePosX;
+        const dY = this.aimPosY - firePosY;
 
         const hypotenuse = Math.sqrt(dX * dX + dY * dY);
         if (hypotenuse === 0) {
@@ -166,19 +183,14 @@ export class BeamCannon extends Weapon {
         this.#beamEndY = 0;
     }
 
-    fire(now, aimX, aimY) {
-        super.fire(now, aimX, aimY);
+    fire() {
+        super.fire();
 
         if (this.owner === null) {
             return;
         }
 
-        const [firePosX, firePosY] = this.owner.getFirePos();
-
-        const [beamHitTarget, distToTarget] = this.#findBeamHitTarget(
-            firePosX, firePosY,
-            aimX, aimY,
-        );
+        const [beamHitTarget, distToTarget] = this.#findBeamHitTarget();
 
         let beamLen;
 
@@ -190,11 +202,7 @@ export class BeamCannon extends Weapon {
             beamLen = BEAM_CANNON_BEAM_LENGTH;
         }
 
-        const [beamEndX, beamEndY] = this.#calculateBeamEndPos(
-            firePosX, firePosY,
-            aimX, aimY,
-            beamLen,
-        );
+        const [beamEndX, beamEndY] = this.#calculateBeamEndPos(beamLen);
 
         this.#beamEndX = beamEndX;
         this.#beamEndY = beamEndY;
@@ -214,9 +222,13 @@ export class BeamCannon extends Weapon {
         }
     }
 
-    #findBeamHitTarget(firePosX, firePosY, aimX, aimY) {
+    #findBeamHitTarget() {
         let closestTarget = null;
         let closestTargetDist = Infinity;
+
+        const [firePosX, firePosY] = this.owner.getFirePos();
+        const aimPosX = this.aimPosX;
+        const aimPosY = this.aimPosY;
 
         for (const gameObject of this.game.getActiveGameObjects()) {
             if (!(gameObject instanceof CombatCharacter)) {
@@ -231,7 +243,13 @@ export class BeamCannon extends Weapon {
             let pointsAboveLine = 0;
 
             for (const [x, y] of gameObject.getCorners()) {
-                if (pointBelowLine(x, y, firePosX, firePosY, aimX, aimY)) {
+                const isBelowLine = pointBelowLine(
+                    x, y,
+                    firePosX, firePosY,
+                    aimPosX, aimPosY
+                );
+
+                if (isBelowLine) {
                     pointsBelowLine++;
                 }
                 else {
@@ -255,9 +273,11 @@ export class BeamCannon extends Weapon {
         return [closestTarget, closestTargetDist];
     }
 
-    #calculateBeamEndPos(firePosX, firePosY, aimX, aimY, beamLen) {
-        const dX = aimX - firePosX;
-        const dY = aimY - firePosY;
+    #calculateBeamEndPos(beamLen) {
+        const [firePosX, firePosY] = this.owner.getFirePos();
+
+        const dX = this.aimPosX - firePosX;
+        const dY = this.aimPosY - firePosY;
 
         const hypotenuse = Math.sqrt(dX * dX + dY * dY);
         if (hypotenuse == 0) {
@@ -284,11 +304,12 @@ export class MissileLauncher extends Weapon {
         this.aimPosY = 0;
     }
 
-    fire(now, aimX, aimY) {
-        super.fire(now, aimX, aimY);
+    fire() {
+        super.fire();
 
         if (this.missile === null && this.owner !== null) {
             const [firePosX, firePosY] = this.owner.getFirePos();
+
             this.missile = this.game.addGameObject(
                 new Missile(
                     this.game, this.owner, this,
@@ -298,42 +319,14 @@ export class MissileLauncher extends Weapon {
                 )
             );
         }
-
-        this.aimAt(aimX, aimY);
-    }
-
-    updateNotFiring(now, aimX, aimY) {
-        super.updateNotFiring(now, aimX, aimY);
-
-        this.aimAt(aimX, aimY);
-    }
-
-    aimAt(aimX, aimY) {
-        this.aimPosX = aimX;
-        this.aimPosY = aimY;
-    }
-
-    #calculateMissileVelocity(firePosX, firePosY, aimX, aimY) {
-        const missileSpeed = this.missileSpeed;
-
-        const dX = aimX - firePosX;
-        const dY = aimY - firePosY;
-
-        const hypotenuse = Math.sqrt(dX * dX + dY * dY);
-        if (hypotenuse === 0) {
-            return [0, -missileSpeed];
-        }
-
-        const vX = (dX / hypotenuse) * missileSpeed;
-        const vY = (dY / hypotenuse) * missileSpeed;
-
-        return [vX, vY];
     }
 }
 
 export class Projectile extends Sprite {
-    constructor(game, owner, bitmapName, x, y, vX, vY) {
-        super(game, bitmapName, x, y);
+    constructor(game, owner, bitmapName, centerX, centerY, vX, vY) {
+        super(game, bitmapName, 0, 0);
+
+        this.setCenter(centerX, centerY);
 
         this.vX = vX;
         this.vY = vY;
@@ -341,7 +334,7 @@ export class Projectile extends Sprite {
         this.owner = owner;
     }
 
-    update(now) {
+    update() {
         const vX = this.vX;
         const vY = this.vY;
 
@@ -355,7 +348,7 @@ export class Projectile extends Sprite {
 
         this.angle = Math.atan2(vY, vX) + Math.PI / 2;
 
-        super.update(now);
+        super.update();
     }
 
     collidesWith(otherSprite) {
@@ -402,13 +395,13 @@ export class Missile extends Projectile {
         this.selfDestructDist = selfDestructDist;
     }
 
-    update(now) {
+    update() {
         const [vX, vY] = this.#calculateVelocity();
 
         this.vX = vX;
         this.vY = vY;
 
-        super.update(now);
+        super.update();
 
         const [aimPosX, aimPosY] = this.getAimPos();
 
@@ -419,8 +412,8 @@ export class Missile extends Projectile {
     }
 
     remove() {
-        super.remove();
         this.missileLauncher.missile = null;
+        super.remove();
     }
 
     collidesWith(otherSprite) {
@@ -456,11 +449,11 @@ export class Missile extends Projectile {
     }
 
     #calculateVelocity() {
-        const [aimX, aimY] = this.getAimPos();
+        const [aimPosX, aimPosY] = this.getAimPos();
         const speed = this.speed;
 
-        const dX = aimX - this.x;
-        const dY = aimY - this.y;
+        const dX = aimPosX - this.x;
+        const dY = aimPosY - this.y;
 
         const hypotenuse = Math.sqrt(dX * dX + dY * dY);
         if (hypotenuse === 0) {
@@ -494,13 +487,15 @@ export class Explosion extends Sprite {
         return this.radius * 2;
     }
 
-    update(now) {
+    update() {
+        const now = this.game.now;
+
         if (this.startTime === null) {
             this.startTime = now;
             this.#inflictRadiusDamage();
         }
 
-        super.update(now);
+        super.update();
 
         if (now - this.startTime >= this.duration) {
             this.remove();

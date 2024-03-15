@@ -22,28 +22,14 @@ import {
 from './configs.js';
 
 export class Enemy extends CombatCharacter {
-    likes(otherSprite) {
-        return otherSprite instanceof Enemy;
-    }
-}
+    constructor(game, bitmapName, x, y, speed, maxHealth) {
+        super(game, bitmapName, x, y, maxHealth);
 
-export class Alien extends Enemy {
-    constructor(game, x, y) {
-        super(game, 'alien', x, y, ALIEN_MAX_HEALTH);
-
-        this.angle = Math.PI;
-
-        this.speed = ALIEN_SPEED;
+        this.speed = speed;
         this.direction = 1;
-
-        this.bulletBitmapName = 'alien_bullet';
     }
 
-    update(now) {
-        if (this.weapon === null) {
-            this.#initWeapon(now);
-        }
-
+    update() {
         const canvas = this.game.canvas;
 
         this.x += this.speed * this.direction;
@@ -57,30 +43,62 @@ export class Alien extends Enemy {
             this.direction = 1;
         }
 
+        super.update();
+    }
+
+    likes(otherSprite) {
+        return otherSprite instanceof Enemy;
+    }
+}
+
+export class Alien extends Enemy {
+    constructor(game, x, y) {
+        super(game, 'alien', x, y, ALIEN_SPEED, ALIEN_MAX_HEALTH);
+
+        this.angle = Math.PI;
+
+        this.bulletBitmapName = 'alien_bullet';
+    }
+
+    update() {
+        if (this.weapon === null) {
+            this.#initWeapon();
+        }
+
+        super.update();
+
+        const canvas = this.game.canvas;
+
         const aimX = randRange(0, canvas.width);
         const aimY = canvas.height;
 
-        this.weapon.fire(now, aimX, aimY);
+        this.weapon.aimAt(aimX, aimY);
+        this.weapon.fire();
+    }
 
-        super.update(now);
+    remove() {
+        this.weapon.remove();
+        super.remove();
     }
 
     getFirePos() {
         return [this.getCenterX(), this.getBottom()];
     }
 
-    #initWeapon(now) {
-        const weapon = new LaserGun(
-            this.game,
-            randRange(ALIEN_LASER_GUN_MIN_ROF, ALIEN_LASER_GUN_MAX_ROF),
-            this.bulletBitmapName,
-            ALIEN_LASER_GUN_BULLET_SPEED,
-            ALIEN_LASER_GUN_BULLET_DAMAGE,
+    #initWeapon() {
+        const weapon = this.game.addGameObject(
+            new LaserGun(
+                this.game,
+                randRange(ALIEN_LASER_GUN_MIN_ROF, ALIEN_LASER_GUN_MAX_ROF),
+                this.bulletBitmapName,
+                ALIEN_LASER_GUN_BULLET_SPEED,
+                ALIEN_LASER_GUN_BULLET_DAMAGE,
+            )
         );
 
-        weapon.nextShotTime = now + weapon.getShotIntervalMs();
+        weapon.nextShotTime = this.game.now + weapon.getShotIntervalMs();
 
-        this.switchWeapon(now, weapon);
+        this.switchWeapon(weapon);
     }
 }
 
@@ -97,8 +115,10 @@ export class ShieldedAlien extends Alien {
         this.shieldRegenTime = null;
     }
 
-    update(now) {
-        super.update(now);
+    update() {
+        super.update();
+
+        const now = this.game.now;
 
         if (this.shieldIntegrity <= 0) {
             if (this.shieldRegenTime === null) {

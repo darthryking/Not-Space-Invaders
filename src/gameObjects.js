@@ -9,7 +9,7 @@ export default class GameObject {
         this.isAlive = true;
     }
 
-    update(now) {
+    update() {
         // no-op
     }
 
@@ -65,6 +65,11 @@ export class Sprite extends GameObject {
         return this.y + this.getHeight() / 2;
     }
 
+    setCenter(centerX, centerY) {
+        this.x = centerX - this.getWidth() / 2;
+        this.y = centerY - this.getHeight() / 2;
+    }
+
     getCenter() {
         return [this.getCenterX(), this.getCenterY()];
     }
@@ -78,7 +83,7 @@ export class Sprite extends GameObject {
         ];
     }
 
-    update(now) {
+    update() {
         for (const gameObject of this.game.getActiveGameObjects()) {
             if (gameObject !== this &&
                 gameObject instanceof Sprite &&

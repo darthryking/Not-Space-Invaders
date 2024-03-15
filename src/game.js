@@ -40,6 +40,8 @@ export default class Game {
         this.assets = new AssetManager();
 
         this.gameObjects = [];
+
+        this.now = 0;
     }
 
     addGameObject(gameObject) {
@@ -160,7 +162,7 @@ export default class Game {
             )
         );
 
-        player.switchWeapon(0, laserGun);
+        player.switchWeapon(laserGun);
 
         // Enemies
         const enemies = [
@@ -182,43 +184,43 @@ export default class Game {
 
         // Main loop
         while (true) {
-            const now = window.performance.now();
-            const nextFrameTime = now + FRAME_INTERVAL;
+            this.now = window.performance.now();
+            const nextFrameTime = this.now + FRAME_INTERVAL;
 
             // Handle player input
             if (player.isAlive) {
                 if (keyboard.isKeyPressed('a') ||
                     keyboard.isKeyPressed('ArrowLeft')) {
                     player.moveLeft();
-                    player.clampToBounds(0, canvas.width);
                 }
                 else if (keyboard.isKeyPressed('d') ||
                     keyboard.isKeyPressed('ArrowRight')) {
                     player.moveRight();
-                    player.clampToBounds(0, canvas.width);
                 }
 
                 if (keyboard.isKeyPressed('1')) {
-                    player.switchWeapon(now, laserGun);
+                    player.switchWeapon(laserGun);
                 }
                 else if (keyboard.isKeyPressed('2')) {
-                    player.switchWeapon(now, beamCannon);
+                    player.switchWeapon(beamCannon);
                 }
                 else if (keyboard.isKeyPressed('3')) {
-                    player.switchWeapon(now, missileLauncher);
+                    player.switchWeapon(missileLauncher);
                 }
 
+                player.weapon.aimAt(mouse.x, mouse.y);
+
                 if (mouse.leftMouseDown) {
-                    player.weapon.fire(now, mouse.x, mouse.y);
+                    player.weapon.fire();
                 }
                 else {
-                    player.weapon.updateNotFiring(now, mouse.x, mouse.y);
+                    player.weapon.updateNotFiring();
                 }
             }
 
             // Update everything
             for (const gameObject of this.gameObjects) {
-                gameObject.update(now);
+                gameObject.update();
             }
             this.cleanUpGameObjects();
 
