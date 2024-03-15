@@ -6,6 +6,7 @@ import {
     CombatCharacter,
     LaserGun,
     BeamCannon,
+    Explosion,
 }
 from './weapons.js';
 import {
@@ -13,11 +14,21 @@ import {
     ALIEN_MAX_HEALTH,
     ALIEN_SHIELD_MAX_INTEGRITY,
     ALIEN_SHIELD_REGEN_TIME,
+    UFO_SPRITE_SCALE,
+    UFO_SPEED,
+    UFO_MAX_HEALTH,
+    UFO_BEAM_MIN_BURST_INTERVAL,
+    UFO_BEAM_MAX_BURST_INTERVAL,
+    UFO_BEAM_MIN_BURST_TIME,
+    UFO_BEAM_MAX_BURST_TIME,
+    UFO_BEAM_WIDTH,
+    UFO_BEAM_Y_OFFSET,
     ALIEN_LASER_GUN_MIN_ROF,
     ALIEN_LASER_GUN_MAX_ROF,
     ALIEN_LASER_GUN_BULLET_SPEED,
     ALIEN_LASER_GUN_BULLET_DAMAGE,
     BEAM_CANNON_SHIELD_DAMAGE_MULTIPLIER,
+    MISSILE_LAUNCHER_MISSILE_UFO_DAMAGE_MULTIPLIER,
 }
 from './configs.js';
 
@@ -161,5 +172,94 @@ export class ShieldedAlien extends Alien {
                 shieldWidth, shieldWidth,
             );
         }
+    }
+}
+
+export class UFO extends Enemy {
+    constructor(game, x, y) {
+        super(game, 'ufo', x, y, UFO_SPEED, UFO_MAX_HEALTH);
+
+        this.nextBeamToggleTime = null;
+        this.firing = false;
+    }
+
+    getWidth() {
+        return super.getWidth() * UFO_SPRITE_SCALE;
+    }
+
+    getHeight() {
+        return super.getWidth() * UFO_SPRITE_SCALE;
+    }
+
+    update() {
+        const now = this.game.now;
+
+        if (this.nextBeamToggleTime === null) {
+            this.nextBeamToggleTime = now + randRange(
+                UFO_BEAM_MIN_BURST_INTERVAL,
+                UFO_BEAM_MAX_BURST_INTERVAL,
+            );
+        }
+
+        if (this.weapon === null) {
+            this.#initWeapon();
+        }
+
+        super.update();
+
+        if (now >= this.nextBeamToggleTime) {
+            this.firing = !this.firing;
+
+            if (this.firing) {
+                this.nextBeamToggleTime = now + randRange(
+                    UFO_BEAM_MIN_BURST_INTERVAL,
+                    UFO_BEAM_MAX_BURST_INTERVAL,
+                );
+            }
+            else {
+                this.nextBeamToggleTime = now + randRange(
+                    UFO_BEAM_MIN_BURST_TIME,
+                    UFO_BEAM_MAX_BURST_TIME,
+                );
+            }
+        }
+
+        if (this.firing) {
+            const [firePosX, firePosY] = this.getFirePos();
+
+            const aimPosX = firePosX;
+            const aimPosY = firePosY + 1;
+
+            this.weapon.aimAt(aimPosX, aimPosY);
+            this.weapon.fire();
+        }
+        else {
+            this.weapon.updateNotFiring();
+        }
+    }
+
+    remove() {
+        this.weapon.remove();
+        super.remove();
+    }
+
+    getFirePos() {
+        return [this.getCenterX(), this.getCenterY() + UFO_BEAM_Y_OFFSET];
+    }
+
+    takeDamage(inflictor, damage) {
+        if (inflictor instanceof Explosion) {
+            damage *= MISSILE_LAUNCHER_MISSILE_UFO_DAMAGE_MULTIPLIER;
+        }
+
+        super.takeDamage(inflictor, damage);
+    }
+
+    #initWeapon() {
+        const weapon = this.game.addGameObject(
+            new BeamCannon(this.game)
+        );
+
+        this.switchWeapon(weapon);
     }
 }

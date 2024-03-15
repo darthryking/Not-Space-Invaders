@@ -19,6 +19,7 @@ from './weapons.js';
 import {
     Alien,
     ShieldedAlien,
+    UFO,
 }
 from './enemies.js';
 import {
@@ -100,6 +101,12 @@ export default class Game {
             67, 81,
         );
         await this.assets.loadBitmap(
+            'ufo',
+            'assets/ufo.png',
+            0, 0,
+            523, 484,
+        );
+        await this.assets.loadBitmap(
             'shield',
             'assets/spaceships_spritesheet.png',
             798, 344,
@@ -177,6 +184,7 @@ export default class Game {
             new ShieldedAlien(this, 350, 100),
             new ShieldedAlien(this, 450, 100),
             new ShieldedAlien(this, 550, 100),
+            new UFO(this, 400, 200),
         ];
         for (const enemy of enemies) {
             this.addGameObject(enemy);

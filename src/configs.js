@@ -12,6 +12,17 @@ export const ALIEN_MAX_HEALTH = 1; // hitpoints
 export const ALIEN_SHIELD_MAX_INTEGRITY = 10; // hitpoints
 export const ALIEN_SHIELD_REGEN_TIME = 5000; // ms
 
+/* UFOs */
+export const UFO_SPRITE_SCALE = 0.25;
+export const UFO_SPEED = 2; // Pixels per frame
+export const UFO_MAX_HEALTH = 5; // hitpoints
+export const UFO_BEAM_MIN_BURST_INTERVAL = 1000; // ms
+export const UFO_BEAM_MAX_BURST_INTERVAL = 5000; // ms
+export const UFO_BEAM_MIN_BURST_TIME = 500; // ms
+export const UFO_BEAM_MAX_BURST_TIME = 2000; // ms
+export const UFO_BEAM_Y_OFFSET = 25; // px
+export const UFO_BEAM_WIDTH = 10; // px
+
 /* Laser Gun */
 export const PLAYER_LASER_GUN_ROF = 3; // Shots per second
 export const PLAYER_LASER_GUN_BULLET_SPEED = 10; // px per frame
@@ -38,6 +49,7 @@ export const MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST = 10;
 export const MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS = 100; // px
 export const MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION = 250; // ms
 export const MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE = 1; // hitpoints
+export const MISSILE_LAUNCHER_MISSILE_UFO_DAMAGE_MULTIPLIER = 3;
 
 /* Debug stuff */
 export const DEBUG_SHOW_BOUNDING_BOXES = false;
