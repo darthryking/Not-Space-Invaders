@@ -5,6 +5,7 @@ from './weapons.js';
 import {
     PLAYER_SPEED,
     PLAYER_MAX_HEALTH,
+    PLAYER_WEAPON_OFFSET_X,
 }
 from './configs.js';
 
@@ -34,6 +35,6 @@ export default class Player extends CombatCharacter {
     }
 
     getFirePos() {
-        return [this.getCenterX(), this.getTop()];
+        return [this.getCenterX() + PLAYER_WEAPON_OFFSET_X, this.getTop()];
     }
 }

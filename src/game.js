@@ -87,9 +87,9 @@ export default class Game {
         // Load assets
         await this.assets.loadBitmap(
             'player',
-            'assets/spaceships_spritesheet.png',
-            820, 22,
-            69, 71,
+            'assets/trucks.png',
+            463, 211,
+            138, 96,
         );
         await this.assets.loadBitmap(
             'alien',
@@ -141,9 +141,9 @@ export default class Game {
         );
         await this.assets.loadBitmap(
             'explosion',
-            'assets/bullets_spritesheet.png',
-            16, 106,
-            13, 13,
+            'assets/explosion.png',
+            208, 18,
+            63, 65,
         );
 
         // Initialize the player

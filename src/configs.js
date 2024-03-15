@@ -5,6 +5,7 @@ export const FRAME_INTERVAL = 1000 / FRAMERATE; // ms per frame
 /* Player */
 export const PLAYER_SPEED = 5; // Pixels per frame
 export const PLAYER_MAX_HEALTH = 10; // hitpoints
+export const PLAYER_WEAPON_OFFSET_X = 38; // px
 
 /* Aliens */
 export const ALIEN_SPEED = 5; // Pixels per frame
