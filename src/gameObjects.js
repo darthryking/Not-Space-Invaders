@@ -54,7 +54,7 @@ export class Sprite extends GameObject {
     }
 
     getBottom() {
-        return this.y + this.getWidth();
+        return this.y + this.getHeight();
     }
 
     getCenterX() {
@@ -108,6 +108,9 @@ export class Sprite extends GameObject {
 
         if (DEBUG_SHOW_BOUNDING_BOXES) {
             ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 1;
+            ctx.lineJoin = 'butt';
+
             ctx.strokeRect(this.x, this.y, width, height);
         }
     }

@@ -26,3 +26,81 @@ export const pointBelowLine = (
 
     return pointY < expectedY;
 };
+
+export const pointInRect = (
+    pointX, pointY,
+    rectX, rectY,
+    rectWidth, rectHeight,
+) => {
+    const rectLeft = rectX;
+    const rectRight = rectX + rectWidth;
+    const rectTop = rectY;
+    const rectBottom = rectY + rectHeight;
+
+    if (pointX < rectLeft) {
+        return false;
+    }
+
+    if (pointX > rectRight) {
+        return false;
+    }
+
+    if (pointY < rectTop) {
+        return false;
+    }
+
+    if (pointY > rectBottom) {
+        return false;
+    }
+
+    return true;
+};
+
+export const rectIntersectsCircle = (
+    rectX, rectY,
+    rectWidth, rectHeight,
+    circleX, circleY,
+    circleRadius,
+) => {
+    const rectLeft = rectX;
+    const rectRight = rectX + rectWidth;
+    const rectTop = rectY;
+    const rectBottom = rectY + rectHeight;
+
+    const circleLeft = circleX - circleRadius;
+    const circleRight = circleX + circleRadius;
+    const circleTop = circleY - circleRadius;
+    const circleBottom = circleY + circleRadius;
+
+    const circleCenterIsWithinRect = pointInRect(
+        circleX, circleY,
+        rectX, rectY,
+        rectWidth, rectHeight,
+    );
+
+    if (circleCenterIsWithinRect) {
+        return true;
+    }
+
+    if (rectLeft <= circleX && circleX <= rectRight) {
+        if (circleTop <= rectTop && rectTop <= circleBottom) {
+            return true;
+        }
+
+        if (circleTop <= rectBottom && rectBottom <= circleBottom) {
+            return true;
+        }
+    }
+
+    if (rectTop <= circleY && circleY <= rectBottom) {
+        if (circleLeft <= rectLeft && rectLeft <= circleRight) {
+            return true;
+        }
+
+        if (circleLeft <= rectRight && rectRight <= circleRight) {
+            return true;
+        }
+    }
+
+    return false;
+};

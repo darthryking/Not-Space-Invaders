@@ -13,7 +13,11 @@ import {
     ALIEN_SPEED,
     ALIEN_MAX_HEALTH,
     ALIEN_SHIELD_MAX_INTEGRITY,
-    ALIEN_SHIELD_REGEN_TIME,
+    ALIEN_SHIELD_REGEN_DELAY,
+    ALIEN_LASER_GUN_MIN_ROF,
+    ALIEN_LASER_GUN_MAX_ROF,
+    ALIEN_LASER_GUN_BULLET_SPEED,
+    ALIEN_LASER_GUN_BULLET_DAMAGE,
     UFO_SPRITE_SCALE,
     UFO_SPEED,
     UFO_MAX_HEALTH,
@@ -24,16 +28,33 @@ import {
     UFO_BEAM_MAX_BURST_INTERVAL,
     UFO_BEAM_MIN_BURST_TIME,
     UFO_BEAM_MAX_BURST_TIME,
-    UFO_BEAM_WIDTH,
     UFO_BEAM_Y_OFFSET,
-    ALIEN_LASER_GUN_MIN_ROF,
-    ALIEN_LASER_GUN_MAX_ROF,
-    ALIEN_LASER_GUN_BULLET_SPEED,
-    ALIEN_LASER_GUN_BULLET_DAMAGE,
+    MOTHERSHIP_SPRITE_SCALE,
+    MOTHERSHIP_SPEED,
+    MOTHERSHIP_MAX_HEALTH,
+    MOTHERSHIP_SHIELD_MAX_INTEGRITY,
+    MOTHERSHIP_SHIELD_REGEN_DELAY,
+    MOTHERSHIP_BEAM_MIN_BURST_INTERVAL,
+    MOTHERSHIP_BEAM_MAX_BURST_INTERVAL,
+    MOTHERSHIP_BEAM_MIN_BURST_TIME,
+    MOTHERSHIP_BEAM_MAX_BURST_TIME,
+    MOTHERSHIP_BEAM_Y_OFFSET,
+    MOTHERSHIP_BEAM_CANNON_BEAM_WIDTH,
+    MOTHERSHIP_BEAM_CANNON_BEAM_COLOR,
+    MOTHERSHIP_BEAM_CANNON_BEAM_DAMAGE,
+    METEOR_SPRITE_SCALE,
+    METEOR_SPEED,
+    METEOR_GRAVITY,
+    METEOR_MAX_HEALTH,
+    METEOR_EXPLOSION_Y_OFFSET,
+    METEOR_EXPLOSION_RADIUS,
+    METEOR_EXPLOSION_DURATION,
+    METEOR_EXPLOSION_DAMAGE,
     BEAM_CANNON_SHIELD_DAMAGE_MULTIPLIER,
     MISSILE_LAUNCHER_MISSILE_UFO_DAMAGE_MULTIPLIER,
 }
 from './configs.js';
+import GameObject from './gameObjects.js';
 
 export class Enemy extends CombatCharacter {
     constructor(game, bitmapName, x, y, speed, maxHealth) {
@@ -121,41 +142,27 @@ export class ShieldedAlien extends Alien {
         super(game, x, y);
 
         this.bitmap = game.assets.get('alien_2');
-        this.shieldBitmap = game.assets.get('shield');
-
         this.bulletBitmapName = 'alien_bullet_2';
 
-        this.shieldIntegrity = ALIEN_SHIELD_MAX_INTEGRITY;
-        this.shieldRegenTime = null;
+        this.shield = new Shield(
+            game, this,
+            'shield',
+            Math.max(this.getWidth(), this.getHeight()) / 2,
+            ALIEN_SHIELD_MAX_INTEGRITY,
+            ALIEN_SHIELD_REGEN_DELAY,
+        );
     }
 
     update() {
         super.update();
-
-        const now = this.game.now;
-
-        if (this.shieldIntegrity <= 0) {
-            if (this.shieldRegenTime === null) {
-                this.shieldRegenTime = now + ALIEN_SHIELD_REGEN_TIME;
-            }
-            else if (now >= this.shieldRegenTime) {
-                this.shieldIntegrity = ALIEN_SHIELD_MAX_INTEGRITY;
-                this.shieldRegenTime = null;
-            }
-        }
+        this.shield.update();
     }
 
     takeDamage(inflictor, damage) {
-        if (this.shieldIntegrity > 0) {
-            if (inflictor instanceof BeamCannon) {
-                damage *= BEAM_CANNON_SHIELD_DAMAGE_MULTIPLIER;
-            }
+        const shield = this.shield;
 
-            this.shieldIntegrity -= damage;
-
-            if (this.shieldIntegrity < 0) {
-                this.shieldIntegrity = 0;
-            }
+        if (shield.isActive()) {
+            shield.takeDamage(inflictor, damage);
         }
         else {
             super.takeDamage(inflictor, damage);
@@ -165,15 +172,10 @@ export class ShieldedAlien extends Alien {
     draw(ctx) {
         super.draw(ctx);
 
-        if (this.shieldIntegrity > 0) {
-            const shieldWidth = Math.max(this.getWidth(), this.getHeight());
+        const shield = this.shield;
 
-            ctx.drawImage(
-                this.shieldBitmap,
-                this.getCenterX() - shieldWidth / 2,
-                this.getCenterY() - shieldWidth / 2,
-                shieldWidth, shieldWidth,
-            );
+        if (shield.isActive()) {
+            shield.draw(ctx);
         }
     }
 }
@@ -182,16 +184,26 @@ export class UFO extends Enemy {
     constructor(game, x, y) {
         super(game, 'ufo', x, y, UFO_SPEED, UFO_MAX_HEALTH);
 
+        this.beamMinBurstInterval = UFO_BEAM_MIN_BURST_INTERVAL;
+        this.beamMaxBurstInterval = UFO_BEAM_MAX_BURST_INTERVAL;
+
+        this.beamMinBurstTime = UFO_BEAM_MIN_BURST_TIME;
+        this.beamMaxBurstTime = UFO_BEAM_MAX_BURST_TIME;
+
+        this.beamCannonBeamWidth = UFO_BEAM_CANNON_BEAM_WIDTH;
+        this.beamCannonBeamColor = UFO_BEAM_CANNON_BEAM_COLOR;
+        this.beamCannonBeamDamage = UFO_BEAM_CANNON_BEAM_DAMAGE;
+
         this.nextBeamToggleTime = null;
         this.firing = false;
     }
 
     getWidth() {
-        return super.getWidth() * UFO_SPRITE_SCALE;
+        return this.bitmap.width * UFO_SPRITE_SCALE;
     }
 
     getHeight() {
-        return super.getWidth() * UFO_SPRITE_SCALE;
+        return this.bitmap.height * UFO_SPRITE_SCALE;
     }
 
     update() {
@@ -199,8 +211,8 @@ export class UFO extends Enemy {
 
         if (this.nextBeamToggleTime === null) {
             this.nextBeamToggleTime = now + randRange(
-                UFO_BEAM_MIN_BURST_INTERVAL,
-                UFO_BEAM_MAX_BURST_INTERVAL,
+                this.beamMinBurstInterval,
+                this.beamMaxBurstInterval,
             );
         }
 
@@ -215,14 +227,14 @@ export class UFO extends Enemy {
 
             if (this.firing) {
                 this.nextBeamToggleTime = now + randRange(
-                    UFO_BEAM_MIN_BURST_INTERVAL,
-                    UFO_BEAM_MAX_BURST_INTERVAL,
+                    this.beamMinBurstTime,
+                    this.beamMaxBurstTime,
                 );
             }
             else {
                 this.nextBeamToggleTime = now + randRange(
-                    UFO_BEAM_MIN_BURST_TIME,
-                    UFO_BEAM_MAX_BURST_TIME,
+                    this.beamMinBurstInterval,
+                    this.beamMaxBurstInterval,
                 );
             }
         }
@@ -262,12 +274,254 @@ export class UFO extends Enemy {
         const weapon = this.game.addGameObject(
             new BeamCannon(
                 this.game,
-                UFO_BEAM_CANNON_BEAM_WIDTH,
-                UFO_BEAM_CANNON_BEAM_COLOR,
-                UFO_BEAM_CANNON_BEAM_DAMAGE,
+                this.beamCannonBeamWidth,
+                this.beamCannonBeamColor,
+                this.beamCannonBeamDamage,
             )
         );
 
         this.switchWeapon(weapon);
+    }
+}
+
+export class Mothership extends UFO {
+    constructor(game, x, y) {
+        super(game, x, y);
+
+        this.bitmap = game.assets.get('mothership');
+
+        this.beamMinBurstInterval = MOTHERSHIP_BEAM_MIN_BURST_INTERVAL;
+        this.beamMaxBurstInterval = MOTHERSHIP_BEAM_MAX_BURST_INTERVAL;
+
+        this.beamMinBurstTime = MOTHERSHIP_BEAM_MIN_BURST_TIME;
+        this.beamMaxBurstTime = MOTHERSHIP_BEAM_MAX_BURST_TIME;
+
+        this.speed = MOTHERSHIP_SPEED;
+        this.maxHealth = MOTHERSHIP_MAX_HEALTH;
+        this.health = MOTHERSHIP_MAX_HEALTH;
+
+        this.beamCannonBeamWidth = MOTHERSHIP_BEAM_CANNON_BEAM_WIDTH;
+        this.beamCannonBeamColor = MOTHERSHIP_BEAM_CANNON_BEAM_COLOR;
+        this.beamCannonBeamDamage = MOTHERSHIP_BEAM_CANNON_BEAM_DAMAGE;
+
+        this.shield = new Shield(
+            game, this,
+            'shield',
+            Math.max(this.getWidth(), this.getHeight()) / 2,
+            MOTHERSHIP_SHIELD_MAX_INTEGRITY,
+            MOTHERSHIP_SHIELD_REGEN_DELAY,
+        );
+    }
+
+    getWidth() {
+        return this.bitmap.width * MOTHERSHIP_SPRITE_SCALE;
+    }
+
+    getHeight() {
+        return this.bitmap.height * MOTHERSHIP_SPRITE_SCALE;
+    }
+
+    update() {
+        super.update();
+        this.shield.update();
+    }
+
+    takeDamage(inflictor, damage) {
+        const shield = this.shield;
+
+        if (shield.isActive()) {
+            shield.takeDamage(inflictor, damage);
+        }
+        else {
+            super.takeDamage(inflictor, damage);
+        }
+    }
+
+    draw(ctx) {
+        super.draw(ctx);
+
+        const shield = this.shield;
+
+        if (shield.isActive()) {
+            shield.draw(ctx);
+        }
+    }
+
+    getFirePos() {
+        return [
+            this.getCenterX(),
+            this.getCenterY() + MOTHERSHIP_BEAM_Y_OFFSET,
+        ];
+    }
+}
+
+export class Meteor extends Enemy {
+    constructor(game, x, y, aimPosX, aimPosY) {
+        super(game, 'meteor', x, y, 0, METEOR_MAX_HEALTH);
+
+        // Disable my superclass's movement logic
+        this.direction = 0;
+
+        const [vX, vY] = this.#calculateVelocity(aimPosX, aimPosY);
+
+        this.vX = vX;
+        this.vY = vY;
+    }
+
+    getWidth() {
+        return this.bitmap.width * METEOR_SPRITE_SCALE;
+    }
+
+    getHeight() {
+        return this.bitmap.height * METEOR_SPRITE_SCALE;
+    }
+
+    getFirePos() {
+        return [this.getCenterX(), this.getBottom()];
+    }
+
+    update() {
+        const canvas = this.game.canvas;
+
+        const vX = this.vX;
+        const vY = this.vY;
+
+        // Only accelerate when we're on-screen, so that we don't build up
+        // insane velocity after falling from above the screen for long periods
+        // of time.
+        if (this.isOnScreen()) {
+            this.vY += METEOR_GRAVITY;
+        }
+
+        this.x += vX;
+        this.y += vY;
+
+        this.angle = Math.atan2(vY, vX) + 3 * Math.PI / 2;
+
+        if (this.getBottom() >= canvas.height) {
+            this.explode();
+        }
+
+        super.update();
+    }
+
+    remove() {
+        super.remove();
+
+        if (this.health <= 0) {
+            this.explode();
+        }
+    }
+
+    collidesWith(otherSprite) {
+        if (!(otherSprite instanceof CombatCharacter)) {
+            return false;
+        }
+
+        if (this.likes(otherSprite)) {
+            return false;
+        }
+
+        return super.collidesWith(otherSprite);
+    }
+
+    onCollision(otherSprite) {
+        this.explode();
+    }
+
+    explode() {
+        const [explosionX, explosionY] = this.getFirePos();
+
+        this.game.addGameObject(
+            new Explosion(
+                this.game,
+                'explosion',
+                explosionX, explosionY,
+                METEOR_EXPLOSION_RADIUS,
+                METEOR_EXPLOSION_DURATION,
+                METEOR_EXPLOSION_DAMAGE,
+            )
+        );
+
+        if (this.isAlive) {
+            this.remove();
+        }
+    }
+
+    #calculateVelocity(aimPosX, aimPosY) {
+        const dX = aimPosX - this.getCenterX();
+        const dY = aimPosY - this.getCenterY();
+
+        const hypotenuse = Math.sqrt(dX * dX + dY * dY);
+        if (hypotenuse === 0) {
+            return [0, -METEOR_SPEED];
+        }
+
+        const vX = (dX / hypotenuse) * METEOR_SPEED;
+        const vY = (dY / hypotenuse) * METEOR_SPEED;
+
+        return [vX, vY];
+    }
+}
+
+class Shield {
+    #regenTime;
+
+    constructor(game, owner, bitmapName, radius, maxIntegrity, regenDelay) {
+        this.game = game;
+        this.owner = owner;
+
+        this.bitmap = game.assets.get(bitmapName);
+
+        this.radius = radius;
+
+        this.maxIntegrity = maxIntegrity;
+        this.integrity = maxIntegrity;
+
+        this.regenDelay = regenDelay;
+        this.#regenTime = null;
+    }
+
+    isActive() {
+        return this.integrity > 0;
+    }
+
+    update() {
+        const now = this.game.now;
+
+        if (!this.isActive()) {
+            if (this.#regenTime === null) {
+                this.#regenTime = now + this.regenDelay;
+            }
+            else if (now >= this.#regenTime) {
+                this.integrity = this.maxIntegrity;
+                this.#regenTime = null;
+            }
+        }
+    }
+
+    takeDamage(inflictor, damage) {
+        if (inflictor instanceof BeamCannon) {
+            damage *= BEAM_CANNON_SHIELD_DAMAGE_MULTIPLIER;
+        }
+
+        this.integrity -= damage;
+
+        if (this.integrity < 0) {
+            this.integrity = 0;
+        }
+    }
+
+    draw(ctx) {
+        const owner = this.owner;
+        const radius = this.radius;
+        const diameter = radius * 2;
+
+        ctx.drawImage(
+            this.bitmap,
+            owner.getCenterX() - radius,
+            owner.getCenterY() - radius,
+            diameter, diameter,
+        );
     }
 }

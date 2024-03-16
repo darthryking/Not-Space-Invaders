@@ -11,7 +11,7 @@ export const PLAYER_WEAPON_OFFSET_X = 38; // px
 export const ALIEN_SPEED = 5; // Pixels per frame
 export const ALIEN_MAX_HEALTH = 1; // hitpoints
 export const ALIEN_SHIELD_MAX_INTEGRITY = 10; // hitpoints
-export const ALIEN_SHIELD_REGEN_TIME = 5000; // ms
+export const ALIEN_SHIELD_REGEN_DELAY = 5000; // ms
 
 /* UFOs */
 export const UFO_SPRITE_SCALE = 0.25;
@@ -22,7 +22,28 @@ export const UFO_BEAM_MAX_BURST_INTERVAL = 5000; // ms
 export const UFO_BEAM_MIN_BURST_TIME = 500; // ms
 export const UFO_BEAM_MAX_BURST_TIME = 2000; // ms
 export const UFO_BEAM_Y_OFFSET = 25; // px
-export const UFO_BEAM_WIDTH = 10; // px
+
+/* Motherships */
+export const MOTHERSHIP_SPRITE_SCALE = 5;
+export const MOTHERSHIP_SPEED = 1; // Pixels per frame
+export const MOTHERSHIP_MAX_HEALTH = 20; // hitpoints
+export const MOTHERSHIP_SHIELD_MAX_INTEGRITY = 100; // hitpoints
+export const MOTHERSHIP_SHIELD_REGEN_DELAY = 10000; // ms
+export const MOTHERSHIP_BEAM_MIN_BURST_INTERVAL = 5000; // ms
+export const MOTHERSHIP_BEAM_MAX_BURST_INTERVAL = 10000; // ms
+export const MOTHERSHIP_BEAM_MIN_BURST_TIME = Infinity; // ms
+export const MOTHERSHIP_BEAM_MAX_BURST_TIME = Infinity; // ms
+export const MOTHERSHIP_BEAM_Y_OFFSET = 70; // px
+
+/* Meteors */
+export const METEOR_SPRITE_SCALE = 0.25;
+export const METEOR_SPEED = 1; // px per frame
+export const METEOR_GRAVITY = 0.1; // px per frame^2
+export const METEOR_MAX_HEALTH = 1; // hitpoints
+export const METEOR_EXPLOSION_Y_OFFSET = 50; // px
+export const METEOR_EXPLOSION_RADIUS = 100; // px
+export const METEOR_EXPLOSION_DURATION = 500; // ms
+export const METEOR_EXPLOSION_DAMAGE = 2; // hitpoints
 
 /* Laser Gun */
 export const PLAYER_LASER_GUN_ROF = 3; // Shots per second
@@ -43,12 +64,15 @@ export const PLAYER_BEAM_CANNON_BEAM_DAMAGE = 0.01; // Base damage per frame
 export const UFO_BEAM_CANNON_BEAM_WIDTH = 30; // px
 export const UFO_BEAM_CANNON_BEAM_COLOR = '#00FFFF';
 export const UFO_BEAM_CANNON_BEAM_DAMAGE = 0.5; // Base damage per frame
+export const MOTHERSHIP_BEAM_CANNON_BEAM_WIDTH = 60; // px
+export const MOTHERSHIP_BEAM_CANNON_BEAM_COLOR = '#CC00FF'; // px
+export const MOTHERSHIP_BEAM_CANNON_BEAM_DAMAGE = 1; // Base damage per frame
 
 /* Missile Launcher */
 export const MISSILE_LAUNCHER_MISSILE_SPEED = 10; // px per frame
 
 // Distance to the mouse that the missile will explode, in px
-export const MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST = 10;
+export const MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST = 25;
 
 export const MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS = 100; // px
 export const MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION = 250; // ms

@@ -1,6 +1,7 @@
 import {
     distance,
     pointBelowLine,
+    rectIntersectsCircle,
 }
 from './utils.js';
 import GameObject, {
@@ -13,6 +14,7 @@ import {
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION,
     DEBUG_SHOW_FIRE_POS,
+    DEBUG_SHOW_BOUNDING_BOXES,
 }
 from './configs.js';
 
@@ -34,7 +36,7 @@ export class CombatCharacter extends Sprite {
 
             ctx.fillStyle = '#FF0000';
             ctx.beginPath();
-            ctx.ellipse(firePosX, firePosY, 5, 5, 0, Math.PI * 2, 0);
+            ctx.ellipse(firePosX, firePosY, 5, 5, 0, 0, Math.PI * 2);
             ctx.fill();
         }
     }
@@ -455,8 +457,8 @@ export class Missile extends Projectile {
         const [aimPosX, aimPosY] = this.getAimPos();
         const speed = this.speed;
 
-        const dX = aimPosX - this.x;
-        const dY = aimPosY - this.y;
+        const dX = aimPosX - this.getCenterX();
+        const dY = aimPosY - this.getCenterY();
 
         const hypotenuse = Math.sqrt(dX * dX + dY * dY);
         if (hypotenuse === 0) {
@@ -505,25 +507,39 @@ export class Explosion extends Sprite {
         }
     }
 
+    draw(ctx) {
+        super.draw(ctx);
+
+        if (DEBUG_SHOW_BOUNDING_BOXES) {
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 1;
+            ctx.lineJoin = 'butt';
+
+            ctx.beginPath();
+            ctx.ellipse(
+                this.getCenterX(), this.getCenterY(),
+                this.radius, this.radius,
+                0, 0, Math.PI * 2,
+            );
+            ctx.stroke();
+        }
+    }
+
     #inflictRadiusDamage() {
         for (const gameObject of this.game.getActiveGameObjects()) {
             if (!(gameObject instanceof CombatCharacter)) {
                 continue;
             }
 
-            const pointsToCheck = gameObject.getCorners();
-            pointsToCheck.push(gameObject.getCenter());
+            const gameObjectIsWithinExplosion = rectIntersectsCircle(
+                gameObject.x, gameObject.y,
+                gameObject.getWidth(), gameObject.getHeight(),
+                this.getCenterX(), this.getCenterY(),
+                this.radius,
+            );
 
-            for (const [x, y] of pointsToCheck) {
-                const dist = distance(
-                    this.getCenterX(), this.getCenterY(),
-                    x, y,
-                );
-
-                if (dist < this.radius) {
-                    gameObject.takeDamage(this, this.damage);
-                    break;
-                }
+            if (gameObjectIsWithinExplosion) {
+                gameObject.takeDamage(this, this.damage);
             }
         }
     }

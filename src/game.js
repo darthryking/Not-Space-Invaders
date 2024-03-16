@@ -20,6 +20,8 @@ import {
     Alien,
     ShieldedAlien,
     UFO,
+    Mothership,
+    Meteor,
 }
 from './enemies.js';
 import {
@@ -110,6 +112,12 @@ export default class Game {
             523, 484,
         );
         await this.assets.loadBitmap(
+            'mothership',
+            'assets/boss_2.png',
+            0, 0,
+            89, 33,
+        );
+        await this.assets.loadBitmap(
             'shield',
             'assets/spaceships_spritesheet.png',
             798, 344,
@@ -138,6 +146,12 @@ export default class Game {
             'assets/bullets_spritesheet.png',
             240, 10,
             13, 26,
+        );
+        await this.assets.loadBitmap(
+            'meteor',
+            'assets/meteor.png',
+            2, 16,
+            204, 370,
         );
         await this.assets.loadBitmap(
             'explosion',
@@ -193,6 +207,57 @@ export default class Game {
             new ShieldedAlien(this, 450, 100),
             new ShieldedAlien(this, 550, 100),
             new UFO(this, 400, 200),
+            new Mothership(this, 500, 200),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
+            new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-canvas.height, 0),
+                randRange(0, canvas.width), canvas.height,
+            ),
         ];
         for (const enemy of enemies) {
             this.addGameObject(enemy);
