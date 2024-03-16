@@ -74,46 +74,7 @@ export default class Game {
         return this.canvas.height - BOTTOM_BAR_HEIGHT;
     }
 
-    addGameObject(gameObject) {
-        this.gameObjects.push(gameObject);
-        return gameObject;
-    }
-
-    getActiveGameObjects() {
-        const activeGameObjects = [];
-
-        for (const gameObject of this.gameObjects) {
-            if (gameObject.isAlive) {
-                activeGameObjects.push(gameObject);
-            }
-        }
-
-        return activeGameObjects;
-    }
-
-    cleanUpGameObjects() {
-        this.gameObjects = this.getActiveGameObjects();
-    }
-
-    async run() {
-        const canvas = this.canvas;
-        const ctx = canvas.getContext('2d');
-
-        const keyboard = this.keyboard;
-        const mouse = this.mouse;
-
-        // Draw loading message
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        writeText(
-            ctx,
-            canvas.width / 2, canvas.height / 2,
-            "Loading...",
-            '48pt monospace', '#FFFFFF', 'center'
-        );
-
-        // Load assets
+    async loadAssets() {
         await this.assets.loadBitmap(
             'player',
             'assets/trucks.png',
@@ -186,15 +147,57 @@ export default class Game {
             208, 18,
             63, 65,
         );
+    }
 
-        // Initialize the player
+    addGameObject(gameObject) {
+        this.gameObjects.push(gameObject);
+        return gameObject;
+    }
+
+    getActiveGameObjects() {
+        const activeGameObjects = [];
+
+        for (const gameObject of this.gameObjects) {
+            if (gameObject.isAlive) {
+                activeGameObjects.push(gameObject);
+            }
+        }
+
+        return activeGameObjects;
+    }
+
+    cleanUpGameObjects() {
+        this.gameObjects = this.getActiveGameObjects();
+    }
+
+    async run() {
+        const canvas = this.canvas;
+        const ctx = canvas.getContext('2d');
+
+        const keyboard = this.keyboard;
+        const mouse = this.mouse;
+
+        /* Draw loading message */
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        writeText(
+            ctx,
+            canvas.width / 2, canvas.height / 2,
+            "Loading...",
+            '48pt monospace', '#FFFFFF', 'center'
+        );
+
+        await this.loadAssets();
+
+        /* Initialize the player */
         const player = this.addGameObject(new Player(this, 'player', 0, 0));
         player.x = this.getRight() / 2 - player.getWidth() / 2;
         player.y = this.getBottom() - player.getHeight();
 
         this.player = player;
 
-        // Initialize the player's weapons
+        /* Initialize the player's weapons */
         const laserGun = this.addGameObject(
             new LaserGun(
                 this,
@@ -222,7 +225,7 @@ export default class Game {
 
         player.switchWeapon(laserGun);
 
-        // Initialize the bottom bar UI
+        /* Initialize the UI */
         const bottomBar = new BottomBar(
             this,
             BOTTOM_BAR_COLOR,
@@ -230,7 +233,7 @@ export default class Game {
             this.canvas.width, BOTTOM_BAR_HEIGHT,
         );
 
-        // Enemies
+        /* Enemies */
         const enemies = [
             new Alien(this, 100, 0),
             new Alien(this, 200, 0),
@@ -259,12 +262,12 @@ export default class Game {
             this.addGameObject(enemy);
         }
 
-        // Main loop
+        /* Main loop */
         while (true) {
             this.now = window.performance.now();
             const nextFrameTime = this.now + FRAME_INTERVAL;
 
-            // Handle player input
+            /* Handle player input */
             if (player.isAlive) {
                 if (keyboard.isKeyPressed('a') ||
                     keyboard.isKeyPressed('ArrowLeft')) {
@@ -295,7 +298,7 @@ export default class Game {
                 }
             }
 
-            // Update all the game objects
+            /* Update all the game objects */
             for (const gameObject of this.gameObjects) {
                 if (gameObject.isAlive) {
                     gameObject.update();
@@ -303,7 +306,7 @@ export default class Game {
             }
             this.cleanUpGameObjects();
 
-            // Draw all the game objects
+            /* Draw all the game objects */
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -311,7 +314,7 @@ export default class Game {
                 gameObject.draw(ctx);
             }
 
-            // Draw the HUD
+            /* Draw the HUD */
             bottomBar.draw(ctx);
 
             if (!player.isAlive) {
@@ -323,7 +326,7 @@ export default class Game {
                 );
             }
 
-            // Wait for next frame
+            /* Wait for next frame */
             await sleep(nextFrameTime - window.performance.now());
         }
     }
