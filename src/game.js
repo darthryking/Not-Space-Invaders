@@ -25,6 +25,11 @@ import {
 }
 from './enemies.js';
 import {
+    BottomBar,
+    writeText,
+}
+from './ui.js';
+import {
     FRAME_INTERVAL,
     PLAYER_LASER_GUN_ROF,
     PLAYER_LASER_GUN_BULLET_SPEED,
@@ -34,6 +39,8 @@ import {
     PLAYER_BEAM_CANNON_BEAM_DAMAGE,
     MISSILE_LAUNCHER_MISSILE_SPEED,
     MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST,
+    BOTTOM_BAR_HEIGHT,
+    BOTTOM_BAR_COLOR,
 }
 from './configs.js';
 
@@ -45,9 +52,26 @@ export default class Game {
 
         this.assets = new AssetManager();
 
+        this.player = null;
         this.gameObjects = [];
 
         this.now = 0;
+    }
+
+    getLeft() {
+        return 0;
+    }
+
+    getRight() {
+        return this.canvas.width;
+    }
+
+    getTop() {
+        return 0;
+    }
+
+    getBottom() {
+        return this.canvas.height - BOTTOM_BAR_HEIGHT;
     }
 
     addGameObject(gameObject) {
@@ -81,10 +105,13 @@ export default class Game {
         // Draw loading message
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = '48pt monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText("Loading...", canvas.width / 2, canvas.height / 2);
+
+        writeText(
+            ctx,
+            canvas.width / 2, canvas.height / 2,
+            "Loading...",
+            '48pt monospace', '#FFFFFF', 'center'
+        );
 
         // Load assets
         await this.assets.loadBitmap(
@@ -162,8 +189,10 @@ export default class Game {
 
         // Initialize the player
         const player = this.addGameObject(new Player(this, 'player', 0, 0));
-        player.x = canvas.width / 2 - player.getWidth() / 2;
-        player.y = canvas.height - player.getHeight();
+        player.x = this.getRight() / 2 - player.getWidth() / 2;
+        player.y = this.getBottom() - player.getHeight();
+
+        this.player = player;
 
         // Initialize the player's weapons
         const laserGun = this.addGameObject(
@@ -193,6 +222,14 @@ export default class Game {
 
         player.switchWeapon(laserGun);
 
+        // Initialize the bottom bar UI
+        const bottomBar = new BottomBar(
+            this,
+            BOTTOM_BAR_COLOR,
+            0, this.getBottom(),
+            this.canvas.width, BOTTOM_BAR_HEIGHT,
+        );
+
         // Enemies
         const enemies = [
             new Alien(this, 100, 0),
@@ -208,57 +245,16 @@ export default class Game {
             new ShieldedAlien(this, 550, 100),
             new UFO(this, 400, 200),
             new Mothership(this, 500, 200),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
-            new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-canvas.height, 0),
-                randRange(0, canvas.width), canvas.height,
-            ),
         ];
+        for (let i = 0; i < 100; i++) {
+            const meteor = new Meteor(
+                this,
+                randRange(0, canvas.width), randRange(-this.getBottom() * 10, 0),
+                randRange(0, canvas.width), this.getBottom(),
+            );
+            enemies.push(meteor);
+        }
+
         for (const enemy of enemies) {
             this.addGameObject(enemy);
         }
@@ -299,7 +295,7 @@ export default class Game {
                 }
             }
 
-            // Update everything
+            // Update all the game objects
             for (const gameObject of this.gameObjects) {
                 if (gameObject.isAlive) {
                     gameObject.update();
@@ -307,7 +303,7 @@ export default class Game {
             }
             this.cleanUpGameObjects();
 
-            // Draw everything
+            // Draw all the game objects
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -315,11 +311,16 @@ export default class Game {
                 gameObject.draw(ctx);
             }
 
+            // Draw the HUD
+            bottomBar.draw(ctx);
+
             if (!player.isAlive) {
-                ctx.fillStyle = '#FF0000';
-                ctx.font = '48pt sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText("lol u ded", canvas.width / 2, canvas.height / 2);
+                writeText(
+                    ctx,
+                    canvas.width / 2, canvas.height / 2,
+                    "lol u ded",
+                    '48pt sans-serif', '#FF0000', 'center',
+                );
             }
 
             // Wait for next frame

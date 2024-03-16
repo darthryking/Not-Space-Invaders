@@ -14,6 +14,8 @@ import {
     ALIEN_MAX_HEALTH,
     ALIEN_SHIELD_MAX_INTEGRITY,
     ALIEN_SHIELD_REGEN_DELAY,
+    ALIEN_BOUNTY,
+    SHIELDED_ALIEN_BOUNTY,
     ALIEN_LASER_GUN_MIN_ROF,
     ALIEN_LASER_GUN_MAX_ROF,
     ALIEN_LASER_GUN_BULLET_SPEED,
@@ -21,14 +23,15 @@ import {
     UFO_SPRITE_SCALE,
     UFO_SPEED,
     UFO_MAX_HEALTH,
-    UFO_BEAM_CANNON_BEAM_COLOR,
-    UFO_BEAM_CANNON_BEAM_WIDTH,
-    UFO_BEAM_CANNON_BEAM_DAMAGE,
     UFO_BEAM_MIN_BURST_INTERVAL,
     UFO_BEAM_MAX_BURST_INTERVAL,
     UFO_BEAM_MIN_BURST_TIME,
     UFO_BEAM_MAX_BURST_TIME,
     UFO_BEAM_Y_OFFSET,
+    UFO_BOUNTY,
+    UFO_BEAM_CANNON_BEAM_COLOR,
+    UFO_BEAM_CANNON_BEAM_WIDTH,
+    UFO_BEAM_CANNON_BEAM_DAMAGE,
     MOTHERSHIP_SPRITE_SCALE,
     MOTHERSHIP_SPEED,
     MOTHERSHIP_MAX_HEALTH,
@@ -39,6 +42,7 @@ import {
     MOTHERSHIP_BEAM_MIN_BURST_TIME,
     MOTHERSHIP_BEAM_MAX_BURST_TIME,
     MOTHERSHIP_BEAM_Y_OFFSET,
+    MOTHERSHIP_BOUNTY,
     MOTHERSHIP_BEAM_CANNON_BEAM_WIDTH,
     MOTHERSHIP_BEAM_CANNON_BEAM_COLOR,
     MOTHERSHIP_BEAM_CANNON_BEAM_DAMAGE,
@@ -50,6 +54,7 @@ import {
     METEOR_EXPLOSION_RADIUS,
     METEOR_EXPLOSION_DURATION,
     METEOR_EXPLOSION_DAMAGE,
+    METEOR_BOUNTY,
     BEAM_CANNON_SHIELD_DAMAGE_MULTIPLIER,
     MISSILE_LAUNCHER_MISSILE_UFO_DAMAGE_MULTIPLIER,
 }
@@ -57,11 +62,13 @@ from './configs.js';
 import GameObject from './gameObjects.js';
 
 export class Enemy extends CombatCharacter {
-    constructor(game, bitmapName, x, y, speed, maxHealth) {
+    constructor(game, bitmapName, x, y, speed, maxHealth, bounty) {
         super(game, bitmapName, x, y, maxHealth);
 
         this.speed = speed;
         this.direction = 1;
+
+        this.bounty = bounty;
     }
 
     update() {
@@ -81,6 +88,14 @@ export class Enemy extends CombatCharacter {
         super.update();
     }
 
+    remove() {
+        if (this.health <= 0) {
+            this.game.player.money += this.bounty;
+        }
+
+        super.remove();
+    }
+
     likes(otherSprite) {
         return otherSprite instanceof Enemy;
     }
@@ -88,7 +103,11 @@ export class Enemy extends CombatCharacter {
 
 export class Alien extends Enemy {
     constructor(game, x, y) {
-        super(game, 'alien', x, y, ALIEN_SPEED, ALIEN_MAX_HEALTH);
+        super(
+            game, 'alien',
+            x, y,
+            ALIEN_SPEED, ALIEN_MAX_HEALTH, ALIEN_BOUNTY,
+        );
 
         this.angle = Math.PI;
 
@@ -102,10 +121,10 @@ export class Alien extends Enemy {
 
         super.update();
 
-        const canvas = this.game.canvas;
+        const game = this.game;
 
-        const aimX = randRange(0, canvas.width);
-        const aimY = canvas.height;
+        const aimX = randRange(0, game.getRight());
+        const aimY = game.getBottom();
 
         this.weapon.aimAt(aimX, aimY);
         this.weapon.fire();
@@ -142,6 +161,8 @@ export class ShieldedAlien extends Alien {
         super(game, x, y);
 
         this.bitmap = game.assets.get('alien_2');
+        this.bounty = SHIELDED_ALIEN_BOUNTY;
+
         this.bulletBitmapName = 'alien_bullet_2';
 
         this.shield = new Shield(
@@ -182,7 +203,7 @@ export class ShieldedAlien extends Alien {
 
 export class UFO extends Enemy {
     constructor(game, x, y) {
-        super(game, 'ufo', x, y, UFO_SPEED, UFO_MAX_HEALTH);
+        super(game, 'ufo', x, y, UFO_SPEED, UFO_MAX_HEALTH, UFO_BOUNTY);
 
         this.beamMinBurstInterval = UFO_BEAM_MIN_BURST_INTERVAL;
         this.beamMaxBurstInterval = UFO_BEAM_MAX_BURST_INTERVAL;
@@ -279,6 +300,8 @@ export class UFO extends Enemy {
                 this.beamCannonBeamDamage,
             )
         );
+        weapon.maxAmmo = Infinity;
+        weapon.ammo = Infinity;
 
         this.switchWeapon(weapon);
     }
@@ -289,6 +312,7 @@ export class Mothership extends UFO {
         super(game, x, y);
 
         this.bitmap = game.assets.get('mothership');
+        this.bounty = MOTHERSHIP_BOUNTY;
 
         this.beamMinBurstInterval = MOTHERSHIP_BEAM_MIN_BURST_INTERVAL;
         this.beamMaxBurstInterval = MOTHERSHIP_BEAM_MAX_BURST_INTERVAL;
@@ -357,7 +381,7 @@ export class Mothership extends UFO {
 
 export class Meteor extends Enemy {
     constructor(game, x, y, aimPosX, aimPosY) {
-        super(game, 'meteor', x, y, 0, METEOR_MAX_HEALTH);
+        super(game, 'meteor', x, y, 0, METEOR_MAX_HEALTH, METEOR_BOUNTY);
 
         // Disable my superclass's movement logic
         this.direction = 0;
@@ -381,8 +405,6 @@ export class Meteor extends Enemy {
     }
 
     update() {
-        const canvas = this.game.canvas;
-
         const vX = this.vX;
         const vY = this.vY;
 
@@ -398,7 +420,7 @@ export class Meteor extends Enemy {
 
         this.angle = Math.atan2(vY, vX) + 3 * Math.PI / 2;
 
-        if (this.getBottom() >= canvas.height) {
+        if (this.getBottom() >= this.game.getBottom()) {
             this.explode();
         }
 

@@ -9,7 +9,13 @@ import GameObject, {
 }
 from './gameObjects.js';
 import {
+    LASER_GUN_NAME,
+    BEAM_CANNON_NAME,
+    BEAM_CANNON_MAX_CHARGE,
+    BEAM_CANNON_CHARGE_CONSUMPTION,
     BEAM_CANNON_BEAM_LENGTH,
+    MISSILE_LAUNCHER_NAME,
+    MISSILE_LAUNCHER_MAX_MISSILES,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_RADIUS,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE,
     MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION,
@@ -79,8 +85,13 @@ export class CombatCharacter extends Sprite {
 }
 
 export class Weapon extends GameObject {
-    constructor(game) {
+    constructor(game, name, maxAmmo) {
         super(game);
+
+        this.name = name;
+
+        this.maxAmmo = maxAmmo;
+        this.ammo = maxAmmo;
 
         this.owner = null;
         this.isFiring = false;
@@ -95,7 +106,12 @@ export class Weapon extends GameObject {
     }
 
     fire() {
-        this.isFiring = true;
+        if (this.ammo > 0) {
+            this.isFiring = true;
+        }
+        else {
+            this.updateNotFiring();
+        }
     }
 
     updateNotFiring() {
@@ -107,7 +123,7 @@ export class LaserGun extends Weapon {
     #nextShotTime;
 
     constructor(game, rof, bulletBitmapName, bulletSpeed, bulletDamage) {
-        super(game);
+        super(game, LASER_GUN_NAME, Infinity);
 
         this.rof = rof;
 
@@ -176,7 +192,7 @@ export class BeamCannon extends Weapon {
     #beamEndY;
 
     constructor(game, width, color, damage) {
-        super(game);
+        super(game, BEAM_CANNON_NAME, BEAM_CANNON_MAX_CHARGE);
 
         this.width = width;
         this.color = color;
@@ -190,6 +206,10 @@ export class BeamCannon extends Weapon {
         super.fire();
 
         if (this.owner === null) {
+            return;
+        }
+
+        if (this.ammo <= 0) {
             return;
         }
 
@@ -209,6 +229,12 @@ export class BeamCannon extends Weapon {
 
         this.#beamEndX = beamEndX;
         this.#beamEndY = beamEndY;
+
+        this.ammo -= BEAM_CANNON_CHARGE_CONSUMPTION;
+
+        if (this.ammo < 0) {
+            this.ammo = 0;
+        }
     }
 
     draw(ctx) {
@@ -298,7 +324,7 @@ export class BeamCannon extends Weapon {
 
 export class MissileLauncher extends Weapon {
     constructor(game, missileSpeed, missileSelfDestructDist) {
-        super(game);
+        super(game, MISSILE_LAUNCHER_NAME, MISSILE_LAUNCHER_MAX_MISSILES);
 
         this.missileSpeed = missileSpeed;
         this.missileSelfDestructDist = missileSelfDestructDist;
@@ -312,18 +338,30 @@ export class MissileLauncher extends Weapon {
     fire() {
         super.fire();
 
-        if (this.missile === null && this.owner !== null) {
-            const [firePosX, firePosY] = this.owner.getFirePos();
-
-            this.missile = this.game.addGameObject(
-                new Missile(
-                    this.game, this.owner, this,
-                    firePosX, firePosY,
-                    this.missileSpeed,
-                    this.missileSelfDestructDist,
-                )
-            );
+        if (this.owner === null) {
+            return;
         }
+
+        if (this.missile !== null) {
+            return;
+        }
+
+        if (this.ammo <= 0) {
+            return;
+        }
+
+        const [firePosX, firePosY] = this.owner.getFirePos();
+
+        this.missile = this.game.addGameObject(
+            new Missile(
+                this.game, this.owner, this,
+                firePosX, firePosY,
+                this.missileSpeed,
+                this.missileSelfDestructDist,
+            )
+        );
+
+        this.ammo--;
     }
 }
 

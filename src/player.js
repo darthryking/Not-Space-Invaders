@@ -14,6 +14,7 @@ export default class Player extends CombatCharacter {
         super(game, bitmapName, x, y, PLAYER_MAX_HEALTH);
 
         this.speed = PLAYER_SPEED;
+        this.money = 0;
     }
 
     moveLeft() {
