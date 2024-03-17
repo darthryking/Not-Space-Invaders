@@ -24,6 +24,7 @@ import {
     Meteor,
 }
 from './enemies.js';
+import Shop from './shop.js';
 import {
     BottomBar,
     writeText,
@@ -34,13 +35,28 @@ import {
     PLAYER_LASER_GUN_ROF,
     PLAYER_LASER_GUN_BULLET_SPEED,
     PLAYER_LASER_GUN_BULLET_DAMAGE,
+    BEAM_CANNON_MAX_CHARGE_REFILLS,
     PLAYER_BEAM_CANNON_BEAM_COLOR,
     PLAYER_BEAM_CANNON_BEAM_WIDTH,
     PLAYER_BEAM_CANNON_BEAM_DAMAGE,
     MISSILE_LAUNCHER_MISSILE_SPEED,
     MISSILE_LAUNCHER_MISSILE_SELF_DESTRUCT_DIST,
+    SHOP_Y,
+    SHOP_WIDTH,
+    SHOP_HEIGHT,
+    BEAM_CANNON_NAME,
+    MISSILE_LAUNCHER_NAME,
+    BEAM_CANNON_AMMO_NAME,
+    MISSILE_AMMO_NAME,
+    LAWN_FERTILIZER_NAME,
+    EXTRA_LIFE_NAME,
+    BEAM_CANNON_PRICE,
+    MISSILE_LAUNCHER_PRICE,
+    BEAM_CANNON_AMMO_PRICE,
+    MISSILE_AMMO_PRICE,
+    LAWN_FERTILIZER_PRICE,
+    EXTRA_LIFE_PRICE,
     BOTTOM_BAR_HEIGHT,
-    BOTTOM_BAR_COLOR,
 }
 from './configs.js';
 
@@ -80,6 +96,12 @@ export default class Game {
             'assets/trucks.png',
             463, 211,
             138, 96,
+        );
+        await this.assets.loadBitmap(
+            'player_destroyed',
+            'assets/trucks.png',
+            956, 668,
+            143, 84,
         );
         await this.assets.loadBitmap(
             'alien',
@@ -228,9 +250,92 @@ export default class Game {
         /* Initialize the UI */
         const bottomBar = new BottomBar(
             this,
-            BOTTOM_BAR_COLOR,
             0, this.getBottom(),
             this.canvas.width, BOTTOM_BAR_HEIGHT,
+        );
+
+        /* Initialize the Shop */
+        const shop = new Shop(
+            this,
+            canvas.width / 2 - SHOP_WIDTH / 2,
+            SHOP_Y,
+            SHOP_WIDTH, SHOP_HEIGHT,
+        );
+
+        shop.addOption(
+            BEAM_CANNON_NAME, BEAM_CANNON_PRICE,
+            () => {
+                if (player.hasBeamCannon) {
+                    return "Already Owned";
+                }
+                else {
+                    return null;
+                }
+            },
+            () => {
+                player.hasBeamCannon = true;
+            },
+        );
+        shop.addOption(
+            MISSILE_LAUNCHER_NAME, MISSILE_LAUNCHER_PRICE,
+            () => {
+                if (player.hasMissileLauncher) {
+                    return "Already Owned";
+                }
+                else {
+                    return null;
+                }
+            },
+            () => {
+                player.hasMissileLauncher = true;
+            },
+        );
+        shop.addOption(
+            BEAM_CANNON_AMMO_NAME, BEAM_CANNON_AMMO_PRICE,
+            () => {
+                if (!player.hasBeamCannon) {
+                    return "Beam Cannon Required";
+                }
+                else if (beamCannon.numRefills >=
+                    BEAM_CANNON_MAX_CHARGE_REFILLS) {
+                    return "Max Batteries Owned";
+                }
+                else {
+                    return null;
+                }
+            },
+            () => {
+                beamCannon.addRefill();
+            },
+        );
+        shop.addOption(
+            MISSILE_AMMO_NAME, MISSILE_AMMO_PRICE,
+            () => {
+                if (!player.hasMissileLauncher) {
+                    return "Missile Launcher Required";
+                }
+                else if (missileLauncher.ammo >= missileLauncher.maxAmmo) {
+                    return "Max Missiles Owned";
+                }
+                else {
+                    return null;
+                }
+            },
+            () => {
+                missileLauncher.ammo++;
+            },
+        );
+        shop.addOption(
+            LAWN_FERTILIZER_NAME, LAWN_FERTILIZER_PRICE,
+            () => null,
+            () => {},
+        );
+        shop.addOption(
+            EXTRA_LIFE_NAME, EXTRA_LIFE_PRICE,
+            () => null,
+            () => {
+                player.extraLives++;
+            },
         );
 
         /* Enemies */
@@ -269,32 +374,49 @@ export default class Game {
 
             /* Handle player input */
             if (player.isAlive) {
-                if (keyboard.isKeyPressed('a') ||
-                    keyboard.isKeyPressed('ArrowLeft')) {
-                    player.moveLeft();
-                }
-                else if (keyboard.isKeyPressed('d') ||
-                    keyboard.isKeyPressed('ArrowRight')) {
-                    player.moveRight();
-                }
+                if (!shop.isActive) {
+                    if (keyboard.isKeyPressed('a') ||
+                        keyboard.isKeyPressed('ArrowLeft')) {
+                        player.moveLeft();
+                    }
+                    else if (keyboard.isKeyPressed('d') ||
+                        keyboard.isKeyPressed('ArrowRight')) {
+                        player.moveRight();
+                    }
 
-                if (keyboard.isKeyPressed('1')) {
-                    player.switchWeapon(laserGun);
-                }
-                else if (keyboard.isKeyPressed('2')) {
-                    player.switchWeapon(beamCannon);
-                }
-                else if (keyboard.isKeyPressed('3')) {
-                    player.switchWeapon(missileLauncher);
-                }
+                    if (keyboard.isKeyPressed('1')) {
+                        player.switchWeapon(laserGun);
+                    }
+                    else if (keyboard.isKeyPressed('2') &&
+                        player.hasBeamCannon) {
+                        player.switchWeapon(beamCannon);
+                    }
+                    else if (keyboard.isKeyPressed('3') &&
+                        player.hasMissileLauncher) {
+                        player.switchWeapon(missileLauncher);
+                    }
 
-                player.weapon.aimAt(mouse.x, mouse.y);
+                    player.weapon.aimAt(mouse.x, mouse.y);
 
-                if (mouse.leftMouseDown) {
-                    player.weapon.fire();
+                    if (mouse.leftMouseDown) {
+                        player.weapon.fire();
+                    }
+                    else {
+                        player.weapon.updateNotFiring();
+                    }
                 }
                 else {
-                    player.weapon.updateNotFiring();
+                    for (let i = 0; i < shop.getNumOptions(); i++) {
+                        const keyName = `${i + 1}`;
+                        if (keyboard.isKeyJustPressed(keyName)) {
+                            shop.buy(i);
+                            break;
+                        }
+                    }
+                }
+
+                if (keyboard.isKeyJustPressed('b')) {
+                    shop.isActive = !shop.isActive;
                 }
             }
 
@@ -324,7 +446,12 @@ export default class Game {
                     "lol u ded",
                     '48pt sans-serif', '#FF0000', 'center',
                 );
+
+                shop.isActive = false;
             }
+
+            /* Draw the Shop */
+            shop.draw(ctx);
 
             /* Wait for next frame */
             await sleep(nextFrameTime - window.performance.now());

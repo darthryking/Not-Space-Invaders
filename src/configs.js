@@ -63,6 +63,7 @@ export const ALIEN_LASER_GUN_BULLET_DAMAGE = 1; // hitpoints
 
 /* Beam Cannon */
 export const BEAM_CANNON_NAME = "Beam Cannon";
+export const BEAM_CANNON_MAX_CHARGE_REFILLS = 3;
 export const BEAM_CANNON_MAX_CHARGE = 100;
 export const BEAM_CANNON_CHARGE_CONSUMPTION = 0.1; // Charge per frame
 export const BEAM_CANNON_BEAM_LENGTH = 99999;
@@ -74,7 +75,7 @@ export const UFO_BEAM_CANNON_BEAM_WIDTH = 30; // px
 export const UFO_BEAM_CANNON_BEAM_COLOR = '#00FFFF';
 export const UFO_BEAM_CANNON_BEAM_DAMAGE = 0.5; // Base damage per frame
 export const MOTHERSHIP_BEAM_CANNON_BEAM_WIDTH = 60; // px
-export const MOTHERSHIP_BEAM_CANNON_BEAM_COLOR = '#CC00FF'; // px
+export const MOTHERSHIP_BEAM_CANNON_BEAM_COLOR = '#9900FF'; // px
 export const MOTHERSHIP_BEAM_CANNON_BEAM_DAMAGE = 1; // Base damage per frame
 
 /* Missile Launcher */
@@ -90,9 +91,25 @@ export const MISSILE_LAUNCHER_MISSILE_EXPLOSION_DURATION = 250; // ms
 export const MISSILE_LAUNCHER_MISSILE_EXPLOSION_DAMAGE = 1; // hitpoints
 export const MISSILE_LAUNCHER_MISSILE_UFO_DAMAGE_MULTIPLIER = 3;
 
+/* Shop */
+export const SHOP_Y = 100; // px
+export const SHOP_WIDTH = 800; // px
+export const SHOP_HEIGHT = 800; // px
+
+export const BEAM_CANNON_AMMO_NAME = "AA Battery";
+export const MISSILE_AMMO_NAME = "Missile";
+export const LAWN_FERTILIZER_NAME = "Lawn Fertilizer";
+export const EXTRA_LIFE_NAME = "Spare Truck";
+
+export const BEAM_CANNON_PRICE = 1000; // $
+export const MISSILE_LAUNCHER_PRICE = 2000; // $
+export const BEAM_CANNON_AMMO_PRICE = 500; // $
+export const MISSILE_AMMO_PRICE = 1000; // $
+export const LAWN_FERTILIZER_PRICE = 1000; // $
+export const EXTRA_LIFE_PRICE = 1000; // $
+
 /* UI */
 export const BOTTOM_BAR_HEIGHT = 100; // px
-export const BOTTOM_BAR_COLOR = '#331100';
 
 /* Debug stuff */
 export const DEBUG_SHOW_BOUNDING_BOXES = false;

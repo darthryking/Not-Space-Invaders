@@ -1,8 +1,10 @@
 export class Keyboard {
     #pressedKeys;
+    #lastKeyState;
 
     constructor() {
         this.#pressedKeys = new Map();
+        this.#lastKeyState = new Map();
 
         document.addEventListener(
             'keydown',
@@ -21,6 +23,23 @@ export class Keyboard {
         else {
             return false;
         }
+    }
+
+    isKeyJustPressed(key) {
+        let wasPreviouslyPressed;
+        if (this.#lastKeyState.has(key)) {
+            wasPreviouslyPressed = this.#lastKeyState.get(key);
+        }
+        else {
+            wasPreviouslyPressed = false;
+        }
+
+        const isCurrentlyPressed = this.isKeyPressed(key);
+        const result = !wasPreviouslyPressed && isCurrentlyPressed;
+
+        this.#lastKeyState.set(key, isCurrentlyPressed);
+
+        return result;
     }
 
     #keyDown(event) {

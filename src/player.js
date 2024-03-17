@@ -3,6 +3,10 @@ import {
 }
 from './weapons.js';
 import {
+    Sprite
+}
+from './gameObjects.js';
+import {
     PLAYER_SPEED,
     PLAYER_MAX_HEALTH,
     PLAYER_WEAPON_OFFSET_X,
@@ -13,8 +17,38 @@ export default class Player extends CombatCharacter {
     constructor(game, bitmapName, x, y) {
         super(game, bitmapName, x, y, PLAYER_MAX_HEALTH);
 
+        this.extraLives = 0;
+
         this.speed = PLAYER_SPEED;
         this.money = 0;
+
+        this.hasBeamCannon = true;
+        this.hasMissileLauncher = true;
+    }
+
+    takeDamage(inflictor, damage) {
+        this.health -= damage;
+
+        if (this.health <= 0) {
+            // Drop a "corpse"
+            const corpse = this.game.addGameObject(
+                new Sprite(
+                    this.game,
+                    'player_destroyed',
+                    this.x, this.y,
+                )
+            );
+            corpse.y = this.game.getBottom() - corpse.getHeight();
+
+            if (this.extraLives > 0) {
+                this.extraLives--;
+                this.health = this.maxHealth;
+                this.x = this.game.getRight() / 2 - this.getWidth() / 2;
+            }
+            else {
+                this.remove();
+            }
+        }
     }
 
     moveLeft() {

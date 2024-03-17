@@ -4,12 +4,14 @@ import {
     MissileLauncher
 }
 from './weapons.js';
+import {
+    BEAM_CANNON_MAX_CHARGE_REFILLS,
+}
+from './configs.js';
 
 export class BottomBar {
-    constructor(game, color, x, y, width, height) {
+    constructor(game, x, y, width, height) {
         this.game = game;
-
-        this.color = color;
 
         this.x = x;
         this.y = y;
@@ -35,7 +37,7 @@ export class BottomBar {
     }
 
     draw(ctx) {
-        ctx.fillStyle = this.color;
+        ctx.fillStyle = '#331100';
         ctx.fillRect(
             this.x, this.y,
             this.width, this.height,
@@ -65,12 +67,19 @@ export class BottomBar {
             '24pt monospace', '#FFFFFF', 'center',
         );
 
+        writeText(
+            ctx,
+            this.x + 20, this.y + 70,
+            `Spare Trucks: ${player.extraLives}`,
+            '24pt monospace', '#FFFFFF', 'left',
+        );
+
         /* Weapon */
         const weapon = player.weapon;
         if (weapon !== null) {
             writeText(
                 ctx,
-                this.x + 20, this.y + 70,
+                this.x + 500, this.y + 40,
                 `Weapon: ${weapon.name}`,
                 '24pt monospace', '#FFFFFF', 'left',
             );
@@ -81,7 +90,7 @@ export class BottomBar {
         /* Money */
         writeText(
             ctx,
-            this.x + 500, this.y + 40,
+            this.x + 1200, this.y + 40,
             `Money: $${player.money}`,
             '24pt monospace', '#99FF99', 'left',
         );
@@ -130,6 +139,15 @@ export class BottomBar {
                 chargeBar.y + chargeBar.height - 5,
                 `${weapon.ammo.toFixed(2)}%`,
                 '24pt monospace', '#000000', 'center',
+            );
+
+            writeText(
+                ctx,
+                chargeBar.x + chargeBar.width + 20,
+                y,
+                "Recharges: " +
+                `${weapon.numRefills}/${BEAM_CANNON_MAX_CHARGE_REFILLS}`,
+                '24pt monospace', '#FFFFFF', 'left',
             );
         }
         else if (weapon instanceof MissileLauncher) {

@@ -200,6 +200,8 @@ export class BeamCannon extends Weapon {
 
         this.#beamEndX = 0;
         this.#beamEndY = 0;
+
+        this.numRefills = 0;
     }
 
     fire() {
@@ -232,8 +234,14 @@ export class BeamCannon extends Weapon {
 
         this.ammo -= BEAM_CANNON_CHARGE_CONSUMPTION;
 
-        if (this.ammo < 0) {
-            this.ammo = 0;
+        if (this.ammo <= 0) {
+            if (this.numRefills > 0) {
+                this.numRefills--;
+                this.ammo += this.maxAmmo;
+            }
+            else {
+                this.ammo = 0;
+            }
         }
     }
 
@@ -250,6 +258,15 @@ export class BeamCannon extends Weapon {
             ctx.lineTo(this.#beamEndX, this.#beamEndY);
             ctx.lineTo(firePosX, firePosY);
             ctx.stroke();
+        }
+    }
+
+    addRefill() {
+        if (this.ammo <= 0) {
+            this.ammo = this.maxAmmo;
+        }
+        else {
+            this.numRefills++;
         }
     }
 
