@@ -9,6 +9,7 @@ import {
     Mouse
 }
 from './input.js';
+import { LawnSegment } from './gameObjects.js'; 
 import Player from './player.js';
 import {
     LaserGun,
@@ -211,11 +212,23 @@ export default class Game {
         );
 
         await this.loadAssets();
+        
+        /* Initialize the lawn */
+        const lawnHeight = 15;
+        const lawnWidth = canvas.width / 10;
+        for(let i=0; i<10; i++) {
+            this.gameObjects.push(new LawnSegment(
+                this, lawnWidth * i, this.getBottom() - lawnHeight, lawnWidth, lawnHeight
+            ));
+            this.gameObjects.push(new LawnSegment(
+                this, lawnWidth * i, this.getBottom() - lawnHeight * 2, lawnWidth, lawnHeight
+            ));
+        }
 
         /* Initialize the player */
         const player = this.addGameObject(new Player(this, 'player', 0, 0));
         player.x = this.getRight() / 2 - player.getWidth() / 2;
-        player.y = this.getBottom() - player.getHeight();
+        player.y = this.getBottom() - player.getHeight() - (lawnHeight * 2);
 
         this.player = player;
 
@@ -253,6 +266,7 @@ export default class Game {
             0, this.getBottom(),
             this.canvas.width, BOTTOM_BAR_HEIGHT,
         );
+      
 
         /* Initialize the Shop */
         const shop = new Shop(

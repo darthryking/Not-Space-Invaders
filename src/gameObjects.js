@@ -4,9 +4,11 @@ import {
 from './configs.js'
 
 export default class GameObject {
-    constructor(game) {
+    constructor(game, x, y) {
         this.game = game;
         this.isAlive = true;
+        this.x = x;
+        this.y = y; 
     }
 
     update() {
@@ -20,27 +22,15 @@ export default class GameObject {
     remove() {
         this.isAlive = false;
     }
-}
-
-export class Sprite extends GameObject {
-    constructor(game, bitmapName, x, y) {
-        super(game);
-
-        this.bitmap = game.assets.get(bitmapName);
-        this.x = x;
-        this.y = y;
-
-        this.angle = 0;
-    }
 
     getWidth() {
-        return this.bitmap.width;
+        // no-op, must implement in subclass
     }
 
     getHeight() {
-        return this.bitmap.height;
+        // no-op, must implement in subclass
     }
-
+    
     getLeft() {
         return this.x;
     }
@@ -83,10 +73,79 @@ export class Sprite extends GameObject {
         ];
     }
 
+    onCollision(otherSprite) {
+        // no-op
+    }
+}
+
+export class LawnSegment extends GameObject {
+    constructor(game, x, y, width, height) {
+        super(game);
+
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        /* Can be green (2), brown (1), or dead (0) */
+        this.isAlive = true; 
+        this.health = 2; 
+    }
+
+    draw(ctx) {
+        if (this.health < 1) {
+            return; 
+        }
+        
+        if (this.health === 2) {
+            ctx.fillStyle = 'green';
+        } else {
+            ctx.fillStyle = 'brown'; 
+        }
+
+        ctx.fillRect(this.x, this.y, this.width, this.height); 
+    }
+
+    update(ctx) {
+    }
+
+    getWidth() {
+        return this.width; 
+    }
+
+    getHeight() {
+        return this.height; 
+    }
+
+    takeDamage(inflictor, damage) {
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.health = 0;
+            this.isAlive = false; 
+        }
+    }
+}
+
+export class Sprite extends GameObject {
+    constructor(game, bitmapName, x, y) {
+        super(game, x, y);
+
+        this.bitmap = game.assets.get(bitmapName);
+        this.angle = 0;
+    }
+
+    getWidth() {
+        return this.bitmap.width;
+    }
+
+    getHeight() {
+        return this.bitmap.height;
+    }
+
     update() {
         for (const gameObject of this.game.getActiveGameObjects()) {
             if (gameObject !== this &&
-                gameObject instanceof Sprite &&
+                (gameObject instanceof Sprite || gameObject instanceof LawnSegment) &&
                 this.collidesWith(gameObject)) {
                 this.onCollision(gameObject);
             }
@@ -155,9 +214,5 @@ export class Sprite extends GameObject {
         }
 
         return true;
-    }
-
-    onCollision(otherSprite) {
-        // no-op
     }
 }

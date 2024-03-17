@@ -5,7 +5,7 @@ import {
 }
 from './utils.js';
 import GameObject, {
-    Sprite
+    Sprite, LawnSegment
 }
 from './gameObjects.js';
 import {
