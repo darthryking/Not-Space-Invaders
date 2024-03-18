@@ -56,8 +56,8 @@ export const PLAYER_LASER_GUN_ROF = 3; // Shots per second
 export const PLAYER_LASER_GUN_BULLET_SPEED = 10; // px per frame
 export const PLAYER_LASER_GUN_BULLET_DAMAGE = 1; // hitpoints
 
-export const ALIEN_LASER_GUN_MIN_ROF = 0.1; // Shots per second
-export const ALIEN_LASER_GUN_MAX_ROF = 0.2; // Shots per second
+export const ALIEN_LASER_GUN_MIN_ROF = 0.2; // Shots per second
+export const ALIEN_LASER_GUN_MAX_ROF = 0.5; // Shots per second
 export const ALIEN_LASER_GUN_BULLET_SPEED = 10; // px per frame
 export const ALIEN_LASER_GUN_BULLET_DAMAGE = 1; // hitpoints
 
@@ -112,7 +112,12 @@ export const EXTRA_LIFE_PRICE = 1000; // $
 export const BOTTOM_BAR_HEIGHT = 100; // px
 
 /* Lawn */
+export const LAWN_HEIGHT = 15; // px
 export const NUM_LAWN_SEGMENTS = 100;
+export const MAX_HEALED_LAWN_SEGMENTS = NUM_LAWN_SEGMENTS * 0.3;
+
+/* Waves */
+export const WAVE_SPAWN_DELAY = 5000; // ms
 
 /* Debug stuff */
 export const DEBUG_SHOW_BOUNDING_BOXES = false;

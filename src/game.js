@@ -13,7 +13,10 @@ import {
     Renderable,
 }
 from './gameObjects.js';
-import LawnSegment from './lawn.js';
+import LawnSegment, {
+    restoreLawn
+}
+from './lawn.js';
 import Player from './player.js';
 import {
     LaserGun,
@@ -21,14 +24,7 @@ import {
     MissileLauncher,
 }
 from './weapons.js';
-import {
-    Alien,
-    ShieldedAlien,
-    UFO,
-    Mothership,
-    Meteor,
-}
-from './enemies.js';
+import EnemyManager from './waves.js';
 import Shop from './shop.js';
 import {
     BottomBar,
@@ -62,6 +58,7 @@ import {
     LAWN_FERTILIZER_PRICE,
     EXTRA_LIFE_PRICE,
     BOTTOM_BAR_HEIGHT,
+    LAWN_HEIGHT,
     NUM_LAWN_SEGMENTS,
 }
 from './configs.js';
@@ -75,6 +72,8 @@ export default class Game {
         this.assets = new AssetManager();
 
         this.player = null;
+        this.lawn = [];
+
         this.gameObjects = [];
 
         this.now = 0;
@@ -198,6 +197,38 @@ export default class Game {
         this.gameObjects = this.getActiveGameObjects();
     }
 
+    getLivingLawnSegments() {
+        const livingLawnSegments = [];
+
+        for (const lawnSegment of this.lawn) {
+            if (lawnSegment.isAlive) {
+                livingLawnSegments.push(lawnSegment);
+            }
+        }
+
+        return livingLawnSegments;
+    }
+
+    movePlayerToFront() {
+        const gameObjects = this.gameObjects;
+
+        let playerIndex = -1;
+
+        for (let i = 0; i < gameObjects.length; i++) {
+            if (gameObjects[i] === this.player) {
+                playerIndex = i;
+                break;
+            }
+        }
+
+        if (playerIndex === -1) {
+            return;
+        }
+
+        gameObjects.splice(playerIndex, 1);
+        gameObjects.push(this.player);
+    }
+
     async run() {
         const canvas = this.canvas;
         const ctx = canvas.getContext('2d');
@@ -218,22 +249,32 @@ export default class Game {
 
         await this.loadAssets();
 
-        /* Initialize the lawn */
-        const lawnHeight = 15;
+        /* Initialize the Lawn */
         const lawnWidth = canvas.width / NUM_LAWN_SEGMENTS;
         for (let i = 0; i < NUM_LAWN_SEGMENTS; i++) {
-            this.addGameObject(new LawnSegment(
-                this, lawnWidth * i, this.getBottom() - lawnHeight, lawnWidth, lawnHeight
-            ));
-            this.addGameObject(new LawnSegment(
-                this, lawnWidth * i, this.getBottom() - lawnHeight * 2, lawnWidth, lawnHeight
-            ));
+            this.lawn.push(
+                this.addGameObject(
+                    new LawnSegment(
+                        this,
+                        lawnWidth * i, this.getBottom() - LAWN_HEIGHT,
+                        lawnWidth, LAWN_HEIGHT,
+                    )
+                )
+            );
+            this.lawn.push(
+                this.addGameObject(
+                    new LawnSegment(
+                        this, lawnWidth * i, this.getBottom() - LAWN_HEIGHT * 2,
+                        lawnWidth, LAWN_HEIGHT,
+                    )
+                )
+            );
         }
 
         /* Initialize the player */
         const player = this.addGameObject(new Player(this, 'player', 0, 0));
         player.x = this.getRight() / 2 - player.getWidth() / 2;
-        player.y = this.getBottom() - player.getHeight() - (lawnHeight * 2);
+        player.y = this.getBottom() - player.getHeight();
 
         this.player = player;
 
@@ -345,8 +386,18 @@ export default class Game {
         );
         shop.addOption(
             LAWN_FERTILIZER_NAME, LAWN_FERTILIZER_PRICE,
-            () => null,
-            () => {},
+            () => {
+                for (const lawnSegment of this.lawn) {
+                    if (lawnSegment.health < lawnSegment.maxHealth) {
+                        return null;
+                    }
+                }
+                return "Lawn Needs No Fertilizer";
+            },
+            () => {
+                restoreLawn(this);
+                this.movePlayerToFront();
+            },
         );
         shop.addOption(
             EXTRA_LIFE_NAME, EXTRA_LIFE_PRICE,
@@ -356,34 +407,8 @@ export default class Game {
             },
         );
 
-        /* Enemies */
-        const enemies = [
-            new Alien(this, 100, 0),
-            new Alien(this, 200, 0),
-            new Alien(this, 300, 0),
-            new Alien(this, 400, 0),
-            new Alien(this, 500, 0),
-            new ShieldedAlien(this, 50, 100),
-            new ShieldedAlien(this, 150, 100),
-            new ShieldedAlien(this, 250, 100),
-            new ShieldedAlien(this, 350, 100),
-            new ShieldedAlien(this, 450, 100),
-            new ShieldedAlien(this, 550, 100),
-            new UFO(this, 400, 200),
-            new Mothership(this, 500, 200),
-        ];
-        for (let i = 0; i < 100; i++) {
-            const meteor = new Meteor(
-                this,
-                randRange(0, canvas.width), randRange(-this.getBottom() * 10, 0),
-                randRange(0, canvas.width), this.getBottom(),
-            );
-            enemies.push(meteor);
-        }
-
-        for (const enemy of enemies) {
-            this.addGameObject(enemy);
-        }
+        /* Initialize Enemies */
+        const enemyManager = this.addGameObject(new EnemyManager(this));
 
         /* Main loop */
         while (true) {
@@ -391,7 +416,7 @@ export default class Game {
             const nextFrameTime = this.now + FRAME_INTERVAL;
 
             /* Handle player input */
-            if (player.isAlive) {
+            if (player.isAlive && this.getLivingLawnSegments().length > 0) {
                 if (!shop.isActive) {
                     if (keyboard.isKeyPressed('a') ||
                         keyboard.isKeyPressed('ArrowLeft')) {
@@ -465,6 +490,16 @@ export default class Game {
                     ctx,
                     canvas.width / 2, canvas.height / 2,
                     "lol u ded",
+                    '48pt sans-serif', '#FF0000', 'center',
+                );
+
+                shop.isActive = false;
+            }
+            else if (this.getLivingLawnSegments().length <= 0) {
+                writeText(
+                    ctx,
+                    canvas.width / 2, canvas.height / 2,
+                    "the lawn died :(",
                     '48pt sans-serif', '#FF0000', 'center',
                 );
 

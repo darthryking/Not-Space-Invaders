@@ -115,6 +115,22 @@ export const rectIntersectsCircle = (
         return true;
     }
 
+    if (distance(circleX, circleY, rectLeft, rectTop) <= circleRadius) {
+        return true;
+    }
+
+    if (distance(circleX, circleY, rectRight, rectTop) <= circleRadius) {
+        return true;
+    }
+
+    if (distance(circleX, circleY, rectLeft, rectBottom) <= circleRadius) {
+        return true;
+    }
+
+    if (distance(circleX, circleY, rectRight, rectBottom) <= circleRadius) {
+        return true;
+    }
+
     if (rectLeft <= circleX && circleX <= rectRight) {
         if (circleTop <= rectTop && rectTop <= circleBottom) {
             return true;

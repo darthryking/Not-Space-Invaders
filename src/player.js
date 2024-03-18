@@ -22,8 +22,8 @@ export default class Player extends CombatCharacter {
         this.speed = PLAYER_SPEED;
         this.money = 0;
 
-        this.hasBeamCannon = true;
-        this.hasMissileLauncher = true;
+        this.hasBeamCannon = false;
+        this.hasMissileLauncher = false;
     }
 
     takeDamage(inflictor, damage) {
@@ -31,14 +31,15 @@ export default class Player extends CombatCharacter {
 
         if (this.health <= 0) {
             // Drop a "corpse"
-            const corpse = this.game.addGameObject(
-                new Sprite(
-                    this.game,
-                    'player_destroyed',
-                    this.x, this.y,
-                )
+            const corpse = new Sprite(
+                this.game,
+                'player_destroyed',
+                this.x, this.y,
             );
             corpse.y = this.game.getBottom() - corpse.getHeight();
+
+            // Add the corpse to the front so it renders below everything
+            this.game.gameObjects.unshift(corpse);
 
             if (this.extraLives > 0) {
                 this.extraLives--;

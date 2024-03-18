@@ -128,10 +128,9 @@ export class Alien extends Enemy {
 
         const game = this.game;
 
-        const aimX = randRange(0, game.getRight());
-        const aimY = game.getBottom();
+        const [aimPosX, aimPosY] = this.getAimPos();
 
-        this.weapon.aimAt(aimX, aimY);
+        this.weapon.aimAt(aimPosX, aimPosY);
         this.weapon.fire();
     }
 
@@ -142,6 +141,11 @@ export class Alien extends Enemy {
 
     getFirePos() {
         return [this.getCenterX(), this.getBottom()];
+    }
+
+    getAimPos() {
+        const game = this.game;
+        return [randRange(0, game.getRight()), game.getBottom()];
     }
 
     #initWeapon() {
@@ -203,6 +207,26 @@ export class ShieldedAlien extends Alien {
         if (shield.isActive()) {
             shield.draw(ctx);
         }
+    }
+
+    getAimPos() {
+        const livingLawnSegments = [];
+
+        for (const lawnSegment of this.game.lawn) {
+            if (lawnSegment.isAlive) {
+                livingLawnSegments.push(lawnSegment);
+            }
+        }
+
+        const numLivingLawnSegments = livingLawnSegments.length;
+        if (numLivingLawnSegments <= 0) {
+            return super.getAimPos();
+        }
+
+        const targetIndex = Math.trunc(randRange(0, numLivingLawnSegments));
+        const targetSegment = livingLawnSegments[targetIndex];
+
+        return [targetSegment.getCenterX(), targetSegment.getCenterY()];
     }
 }
 
