@@ -111,6 +111,9 @@ export const EXTRA_LIFE_PRICE = 1000; // $
 /* UI */
 export const BOTTOM_BAR_HEIGHT = 100; // px
 
+/* Lawn */
+export const NUM_LAWN_SEGMENTS = 100;
+
 /* Debug stuff */
 export const DEBUG_SHOW_BOUNDING_BOXES = false;
 export const DEBUG_SHOW_FIRE_POS = false;

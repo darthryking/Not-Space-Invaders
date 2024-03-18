@@ -56,6 +56,39 @@ export const pointInRect = (
     return true;
 };
 
+export const rectIntersectsRect = (
+    x1, y1, width1, height1,
+    x2, y2, width2, height2,
+) => {
+    const rect1Left = x1;
+    const rect1Right = x1 + width1;
+    const rect1Top = y1;
+    const rect1Bottom = y1 + height1;
+
+    const rect2Left = x2;
+    const rect2Right = x2 + width2;
+    const rect2Top = y2;
+    const rect2Bottom = y2 + height2;
+
+    if (rect1Left > rect2Right) {
+        return false;
+    }
+
+    if (rect1Right < rect2Left) {
+        return false;
+    }
+
+    if (rect1Top > rect2Bottom) {
+        return false;
+    }
+
+    if (rect1Bottom < rect2Top) {
+        return false;
+    }
+
+    return true;
+};
+
 export const rectIntersectsCircle = (
     rectX, rectY,
     rectWidth, rectHeight,

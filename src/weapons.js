@@ -1,13 +1,16 @@
 import {
     distance,
     pointBelowLine,
+    rectIntersectsRect,
     rectIntersectsCircle,
 }
 from './utils.js';
 import GameObject, {
-    Sprite, LawnSegment
+    Renderable,
+    Sprite,
 }
 from './gameObjects.js';
+import LawnSegment from './lawn.js';
 import {
     LASER_GUN_NAME,
     BEAM_CANNON_NAME,
@@ -79,8 +82,8 @@ export class CombatCharacter extends Sprite {
         }
     }
 
-    likes(otherSprite) {
-        return otherSprite === this;
+    likes(other) {
+        return other === this;
     }
 }
 
@@ -198,9 +201,7 @@ export class BeamCannon extends Weapon {
         this.color = color;
         this.damage = damage;
 
-        this.#beamEndX = 0;
-        this.#beamEndY = 0;
-
+        this.beam = null;
         this.numRefills = 0;
     }
 
@@ -227,10 +228,12 @@ export class BeamCannon extends Weapon {
             beamLen = BEAM_CANNON_BEAM_LENGTH;
         }
 
+        const [firePosX, firePosY] = this.owner.getFirePos();
         const [beamEndX, beamEndY] = this.#calculateBeamEndPos(beamLen);
 
-        this.#beamEndX = beamEndX;
-        this.#beamEndY = beamEndY;
+        this.#updateBeam(firePosX, firePosY, beamEndX, beamEndY);
+
+        this.beam.isActive = true;
 
         this.ammo -= BEAM_CANNON_CHARGE_CONSUMPTION;
 
@@ -245,19 +248,9 @@ export class BeamCannon extends Weapon {
         }
     }
 
-    draw(ctx) {
-        if (this.isFiring && this.owner !== null) {
-            const [firePosX, firePosY] = this.owner.getFirePos();
-
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = this.width;
-            ctx.lineJoin = 'round';
-
-            ctx.beginPath();
-            ctx.moveTo(firePosX, firePosY);
-            ctx.lineTo(this.#beamEndX, this.#beamEndY);
-            ctx.lineTo(firePosX, firePosY);
-            ctx.stroke();
+    updateNotFiring() {
+        if (this.beam !== null) {
+            this.beam.isActive = false;
         }
     }
 
@@ -279,11 +272,32 @@ export class BeamCannon extends Weapon {
         const aimPosY = this.aimPosY;
 
         for (const gameObject of this.game.getActiveGameObjects()) {
-            if (!(gameObject instanceof CombatCharacter)) {
+            if (this.owner.likes(gameObject)) {
                 continue;
             }
 
-            if (this.owner.likes(gameObject)) {
+            if (!(gameObject instanceof CombatCharacter) &&
+                !(gameObject instanceof LawnSegment)) {
+                continue;
+            }
+
+            const [beamEndX, beamEndY] = this.#calculateBeamEndPos(
+                BEAM_CANNON_BEAM_LENGTH
+            );
+            const rect1X = Math.min(firePosX, beamEndX);
+            const rect1Y = Math.min(firePosY, beamEndY);
+            const rect1Width = Math.abs(beamEndX - firePosX);
+            const rect1Height = Math.abs(beamEndY - firePosY);
+
+            const rect2X = gameObject.x;
+            const rect2Y = gameObject.y;
+            const rect2Width = gameObject.getWidth();
+            const rect2Height = gameObject.getHeight();
+
+            if (!rectIntersectsRect(
+                    rect1X, rect1Y, rect1Width, rect1Height,
+                    rect2X, rect2Y, rect2Width, rect2Height,
+                )) {
                 continue;
             }
 
@@ -336,6 +350,27 @@ export class BeamCannon extends Weapon {
         const beamEndY = firePosY + (dY / hypotenuse) * beamLen;
 
         return [beamEndX, beamEndY];
+    }
+
+    #updateBeam(startX, startY, endX, endY) {
+        if (this.beam === null) {
+            this.beam = this.game.addGameObject(
+                new Beam(
+                    this.game,
+                    startX, startY,
+                    endX, endY,
+                    this.width, this.color,
+                )
+            );
+        }
+        else {
+            const beam = this.beam;
+
+            beam.x = startX;
+            beam.y = startY;
+            beam.endX = endX;
+            beam.endY = endY;
+        }
     }
 }
 
@@ -411,12 +446,20 @@ export class Projectile extends Sprite {
         super.update();
     }
 
-    collidesWith(otherSprite) {
-        if (this.owner.likes(otherSprite)) {
+    shouldCollideWith(other) {
+        if (this.owner.likes(other)) {
             return false;
         }
 
-        return super.collidesWith(otherSprite);
+        if (other instanceof CombatCharacter) {
+            return true;
+        }
+
+        if (other instanceof LawnSegment) {
+            return true;
+        }
+
+        return false;
     }
 }
 
@@ -427,16 +470,8 @@ export class Bullet extends Projectile {
         this.damage = damage;
     }
 
-    collidesWith(otherSprite) {
-        if (!(otherSprite instanceof CombatCharacter)) {
-            return false;
-        }
-
-        return super.collidesWith(otherSprite);
-    }
-
-    onCollision(otherSprite) {
-        otherSprite.takeDamage(this, this.damage);
+    onCollision(other) {
+        other.takeDamage(this, this.damage);
         this.remove();
     }
 }
@@ -476,15 +511,7 @@ export class Missile extends Projectile {
         super.remove();
     }
 
-    collidesWith(otherSprite) {
-        if (!(otherSprite instanceof CombatCharacter)) {
-            return false;
-        }
-
-        return super.collidesWith(otherSprite);
-    }
-
-    onCollision(otherSprite) {
+    onCollision(other) {
         this.explode();
     }
 
@@ -524,6 +551,48 @@ export class Missile extends Projectile {
         const vY = (dY / hypotenuse) * speed;
 
         return [vX, vY];
+    }
+}
+
+export class Beam extends Renderable {
+    constructor(game, startX, startY, endX, endY, width, color) {
+        super(game, startX, startY);
+
+        this.endX = endX;
+        this.endY = endY;
+
+        this.width = width;
+        this.color = color;
+
+        this.isActive = false;
+    }
+
+    getWidth() {
+        return this.endX - this.x;
+    }
+
+    getHeight() {
+        return this.endY - this.y;
+    }
+
+    draw(ctx) {
+        if (!this.isActive) {
+            return;
+        }
+
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.width;
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.endX, this.endY);
+        ctx.lineTo(this.x, this.y);
+        ctx.stroke();
+    }
+
+    shouldCollideWith(other) {
+        return false;
     }
 }
 
@@ -582,7 +651,7 @@ export class Explosion extends Sprite {
 
     #inflictRadiusDamage() {
         for (const gameObject of this.game.getActiveGameObjects()) {
-            if (!(gameObject instanceof CombatCharacter)) {
+            if (!(gameObject instanceof Renderable)) {
                 continue;
             }
 

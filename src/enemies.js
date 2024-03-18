@@ -9,6 +9,7 @@ import {
     Explosion,
 }
 from './weapons.js';
+import LawnSegment from './lawn.js';
 import {
     ALIEN_SPEED,
     ALIEN_MAX_HEALTH,
@@ -97,7 +98,11 @@ export class Enemy extends CombatCharacter {
     }
 
     likes(otherSprite) {
-        return otherSprite instanceof Enemy;
+        if (otherSprite instanceof Enemy) {
+            return true;
+        }
+
+        return super.likes(otherSprite);
     }
 }
 
@@ -435,19 +440,23 @@ export class Meteor extends Enemy {
         }
     }
 
-    collidesWith(otherSprite) {
-        if (!(otherSprite instanceof CombatCharacter)) {
+    shouldCollideWith(other) {
+        if (this.likes(other)) {
             return false;
         }
 
-        if (this.likes(otherSprite)) {
-            return false;
+        if (other instanceof CombatCharacter) {
+            return true;
         }
 
-        return super.collidesWith(otherSprite);
+        if (other instanceof LawnSegment) {
+            return true;
+        }
+
+        return false;
     }
 
-    onCollision(otherSprite) {
+    onCollision(other) {
         this.explode();
     }
 

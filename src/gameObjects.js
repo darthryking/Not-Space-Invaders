@@ -1,4 +1,8 @@
 import {
+    rectIntersectsRect
+}
+from './utils.js';
+import {
     DEBUG_SHOW_BOUNDING_BOXES
 }
 from './configs.js'
@@ -7,30 +11,59 @@ export default class GameObject {
     constructor(game, x, y) {
         this.game = game;
         this.isAlive = true;
-        this.x = x;
-        this.y = y; 
     }
 
     update() {
         // no-op
     }
 
-    draw(ctx) {
-        // no-op
-    }
-
     remove() {
         this.isAlive = false;
     }
+}
+
+export class Renderable extends GameObject {
+    constructor(game, x, y) {
+        super(game);
+
+        this.x = x;
+        this.y = y;
+    }
+
+    update() {
+        for (const gameObject of this.game.getActiveGameObjects()) {
+            if (gameObject === this) {
+                continue;
+            }
+
+            if (!(gameObject instanceof Renderable)) {
+                continue;
+            }
+
+            if (!this.intersectsWith(gameObject)) {
+                continue;
+            }
+
+            if (!this.shouldCollideWith(gameObject)) {
+                continue;
+            }
+
+            this.onCollision(gameObject);
+        }
+    }
+
+    draw(ctx) {
+        throw new Error(".draw() not implemented!");
+    }
 
     getWidth() {
-        // no-op, must implement in subclass
+        throw new Error(".getWidth() not implemented!");
     }
 
     getHeight() {
-        // no-op, must implement in subclass
+        throw new Error(".getHeight() not implemented!");
     }
-    
+
     getLeft() {
         return this.x;
     }
@@ -73,107 +106,6 @@ export default class GameObject {
         ];
     }
 
-    onCollision(otherSprite) {
-        // no-op
-    }
-}
-
-export class LawnSegment extends GameObject {
-    constructor(game, x, y, width, height) {
-        super(game);
-
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-
-        /* Can be green (2), brown (1), or dead (0) */
-        this.isAlive = true; 
-        this.health = 2; 
-    }
-
-    draw(ctx) {
-        if (this.health < 1) {
-            return; 
-        }
-        
-        if (this.health === 2) {
-            ctx.fillStyle = 'green';
-        } else {
-            ctx.fillStyle = 'brown'; 
-        }
-
-        ctx.fillRect(this.x, this.y, this.width, this.height); 
-    }
-
-    update(ctx) {
-    }
-
-    getWidth() {
-        return this.width; 
-    }
-
-    getHeight() {
-        return this.height; 
-    }
-
-    takeDamage(inflictor, damage) {
-        this.health -= damage;
-        if (this.health <= 0) {
-            this.health = 0;
-            this.isAlive = false; 
-        }
-    }
-}
-
-export class Sprite extends GameObject {
-    constructor(game, bitmapName, x, y) {
-        super(game, x, y);
-
-        this.bitmap = game.assets.get(bitmapName);
-        this.angle = 0;
-    }
-
-    getWidth() {
-        return this.bitmap.width;
-    }
-
-    getHeight() {
-        return this.bitmap.height;
-    }
-
-    update() {
-        for (const gameObject of this.game.getActiveGameObjects()) {
-            if (gameObject !== this &&
-                (gameObject instanceof Sprite || gameObject instanceof LawnSegment) &&
-                this.collidesWith(gameObject)) {
-                this.onCollision(gameObject);
-            }
-        }
-    }
-
-    draw(ctx) {
-        const width = this.getWidth();
-        const height = this.getHeight();
-
-        const halfWidth = width / 2;
-        const halfHeight = height / 2;
-
-        ctx.save();
-        ctx.translate(this.x + halfWidth, this.y + halfHeight);
-        ctx.rotate(this.angle);
-        ctx.drawImage(this.bitmap, -halfWidth, -halfHeight, width, height);
-        ctx.restore();
-
-        if (DEBUG_SHOW_BOUNDING_BOXES) {
-            ctx.strokeStyle = '#FF0000';
-            ctx.lineWidth = 1;
-            ctx.lineJoin = 'butt';
-
-            ctx.strokeRect(this.x, this.y, width, height);
-        }
-    }
-
     isOnScreen() {
         const canvas = this.game.canvas;
 
@@ -196,23 +128,61 @@ export class Sprite extends GameObject {
         return true;
     }
 
-    collidesWith(otherSprite) {
-        if (this.getRight() < otherSprite.getLeft()) {
-            return false;
-        }
+    intersectsWith(other) {
+        return rectIntersectsRect(
+            this.x, this.y, this.getWidth(), this.getHeight(),
+            other.x, other.y, other.getWidth(), other.getHeight(),
+        );
+    }
 
-        if (this.getLeft() > otherSprite.getRight()) {
-            return false;
-        }
-
-        if (this.getTop() > otherSprite.getBottom()) {
-            return false;
-        }
-
-        if (this.getBottom() < otherSprite.getTop()) {
-            return false;
-        }
-
+    shouldCollideWith(other) {
         return true;
+    }
+
+    onCollision(other) {
+        // no-op
+    }
+
+    takeDamage(inflictor, damage) {
+        // no-op
+    }
+}
+
+export class Sprite extends Renderable {
+    constructor(game, bitmapName, x, y) {
+        super(game, x, y);
+
+        this.bitmap = game.assets.get(bitmapName);
+        this.angle = 0;
+    }
+
+    getWidth() {
+        return this.bitmap.width;
+    }
+
+    getHeight() {
+        return this.bitmap.height;
+    }
+
+    draw(ctx) {
+        const width = this.getWidth();
+        const height = this.getHeight();
+
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
+
+        ctx.save();
+        ctx.translate(this.x + halfWidth, this.y + halfHeight);
+        ctx.rotate(this.angle);
+        ctx.drawImage(this.bitmap, -halfWidth, -halfHeight, width, height);
+        ctx.restore();
+
+        if (DEBUG_SHOW_BOUNDING_BOXES) {
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 1;
+            ctx.lineJoin = 'butt';
+
+            ctx.strokeRect(this.x, this.y, width, height);
+        }
     }
 }

@@ -9,7 +9,11 @@ import {
     Mouse
 }
 from './input.js';
-import { LawnSegment } from './gameObjects.js'; 
+import {
+    Renderable,
+}
+from './gameObjects.js';
+import LawnSegment from './lawn.js';
 import Player from './player.js';
 import {
     LaserGun,
@@ -58,6 +62,7 @@ import {
     LAWN_FERTILIZER_PRICE,
     EXTRA_LIFE_PRICE,
     BOTTOM_BAR_HEIGHT,
+    NUM_LAWN_SEGMENTS,
 }
 from './configs.js';
 
@@ -212,15 +217,15 @@ export default class Game {
         );
 
         await this.loadAssets();
-        
+
         /* Initialize the lawn */
         const lawnHeight = 15;
-        const lawnWidth = canvas.width / 10;
-        for(let i=0; i<10; i++) {
-            this.gameObjects.push(new LawnSegment(
+        const lawnWidth = canvas.width / NUM_LAWN_SEGMENTS;
+        for (let i = 0; i < NUM_LAWN_SEGMENTS; i++) {
+            this.addGameObject(new LawnSegment(
                 this, lawnWidth * i, this.getBottom() - lawnHeight, lawnWidth, lawnHeight
             ));
-            this.gameObjects.push(new LawnSegment(
+            this.addGameObject(new LawnSegment(
                 this, lawnWidth * i, this.getBottom() - lawnHeight * 2, lawnWidth, lawnHeight
             ));
         }
@@ -266,7 +271,6 @@ export default class Game {
             0, this.getBottom(),
             this.canvas.width, BOTTOM_BAR_HEIGHT,
         );
-      
 
         /* Initialize the Shop */
         const shop = new Shop(
@@ -442,12 +446,15 @@ export default class Game {
             }
             this.cleanUpGameObjects();
 
-            /* Draw all the game objects */
+            /* Clear the screen */
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            /* Draw all renderable game objects */
             for (const gameObject of this.gameObjects) {
-                gameObject.draw(ctx);
+                if (gameObject instanceof Renderable) {
+                    gameObject.draw(ctx);
+                }
             }
 
             /* Draw the HUD */
