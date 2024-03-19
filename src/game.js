@@ -76,6 +76,8 @@ export default class Game {
 
         this.gameObjects = [];
 
+        this.loseMessage = null;
+
         this.now = 0;
     }
 
@@ -416,7 +418,7 @@ export default class Game {
             const nextFrameTime = this.now + FRAME_INTERVAL;
 
             /* Handle player input */
-            if (player.isAlive && this.getLivingLawnSegments().length > 0) {
+            if (this.loseMessage === null) {
                 if (!shop.isActive) {
                     if (keyboard.isKeyPressed('a') ||
                         keyboard.isKeyPressed('ArrowLeft')) {
@@ -471,6 +473,16 @@ export default class Game {
             }
             this.cleanUpGameObjects();
 
+            /* Have we lost yet? */
+            if (this.loseMessage === null) {
+                if (!this.player.isAlive) {
+                    this.loseMessage = "lol u ded";
+                }
+                else if (this.getLivingLawnSegments().length <= 0) {
+                    this.loseMessage = "the lawn died :(";
+                }
+            }
+
             /* Clear the screen */
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -485,21 +497,12 @@ export default class Game {
             /* Draw the HUD */
             bottomBar.draw(ctx);
 
-            if (!player.isAlive) {
+            /* Draw the lose message (if we've lost) */
+            if (this.loseMessage !== null) {
                 writeText(
                     ctx,
                     canvas.width / 2, canvas.height / 2,
-                    "lol u ded",
-                    '48pt sans-serif', '#FF0000', 'center',
-                );
-
-                shop.isActive = false;
-            }
-            else if (this.getLivingLawnSegments().length <= 0) {
-                writeText(
-                    ctx,
-                    canvas.width / 2, canvas.height / 2,
-                    "the lawn died :(",
+                    this.loseMessage,
                     '48pt sans-serif', '#FF0000', 'center',
                 );
 

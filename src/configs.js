@@ -24,7 +24,7 @@ export const UFO_BEAM_MAX_BURST_INTERVAL = 5000; // ms
 export const UFO_BEAM_MIN_BURST_TIME = 500; // ms
 export const UFO_BEAM_MAX_BURST_TIME = 2000; // ms
 export const UFO_BEAM_Y_OFFSET = 25; // px
-export const UFO_BOUNTY = 500; // $
+export const UFO_BOUNTY = 1000; // $
 
 /* Motherships */
 export const MOTHERSHIP_SPRITE_SCALE = 5;
@@ -37,7 +37,7 @@ export const MOTHERSHIP_BEAM_MAX_BURST_INTERVAL = 10000; // ms
 export const MOTHERSHIP_BEAM_MIN_BURST_TIME = Infinity; // ms
 export const MOTHERSHIP_BEAM_MAX_BURST_TIME = Infinity; // ms
 export const MOTHERSHIP_BEAM_Y_OFFSET = 70; // px
-export const MOTHERSHIP_BOUNTY = 1000; // $
+export const MOTHERSHIP_BOUNTY = 5000; // $
 
 /* Meteors */
 export const METEOR_SPRITE_SCALE = 0.25;
@@ -80,7 +80,7 @@ export const MOTHERSHIP_BEAM_CANNON_BEAM_DAMAGE = 1; // Base damage per frame
 
 /* Missile Launcher */
 export const MISSILE_LAUNCHER_NAME = "Missile Launcher";
-export const MISSILE_LAUNCHER_MAX_MISSILES = 3;
+export const MISSILE_LAUNCHER_MAX_MISSILES = 5;
 export const MISSILE_LAUNCHER_MISSILE_SPEED = 10; // px per frame
 
 // Distance to the mouse that the missile will explode, in px
@@ -102,9 +102,9 @@ export const LAWN_FERTILIZER_NAME = "Lawn Fertilizer";
 export const EXTRA_LIFE_NAME = "Spare Truck";
 
 export const BEAM_CANNON_PRICE = 1000; // $
-export const MISSILE_LAUNCHER_PRICE = 2000; // $
+export const MISSILE_LAUNCHER_PRICE = 1500; // $
 export const BEAM_CANNON_AMMO_PRICE = 500; // $
-export const MISSILE_AMMO_PRICE = 1000; // $
+export const MISSILE_AMMO_PRICE = 500; // $
 export const LAWN_FERTILIZER_PRICE = 1000; // $
 export const EXTRA_LIFE_PRICE = 1000; // $
 
