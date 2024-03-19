@@ -355,7 +355,7 @@ export default class Game {
             BEAM_CANNON_AMMO_NAME, BEAM_CANNON_AMMO_PRICE,
             () => {
                 if (!player.hasBeamCannon) {
-                    return "Beam Cannon Required";
+                    return `${BEAM_CANNON_NAME} Required`;
                 }
                 else if (beamCannon.numRefills >=
                     BEAM_CANNON_MAX_CHARGE_REFILLS) {
@@ -373,7 +373,7 @@ export default class Game {
             MISSILE_AMMO_NAME, MISSILE_AMMO_PRICE,
             () => {
                 if (!player.hasMissileLauncher) {
-                    return "Missile Launcher Required";
+                    return `${MISSILE_LAUNCHER_NAME} Required`;
                 }
                 else if (missileLauncher.ammo >= missileLauncher.maxAmmo) {
                     return "Max Missiles Owned";

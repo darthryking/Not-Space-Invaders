@@ -51,7 +51,7 @@ export const METEOR_EXPLOSION_DAMAGE = 2; // hitpoints
 export const METEOR_BOUNTY = 500; // $
 
 /* Laser Gun */
-export const LASER_GUN_NAME = "Gun";
+export const LASER_GUN_NAME = "Cannon";
 export const PLAYER_LASER_GUN_ROF = 3; // Shots per second
 export const PLAYER_LASER_GUN_BULLET_SPEED = 10; // px per frame
 export const PLAYER_LASER_GUN_BULLET_DAMAGE = 1; // hitpoints
@@ -62,7 +62,7 @@ export const ALIEN_LASER_GUN_BULLET_SPEED = 10; // px per frame
 export const ALIEN_LASER_GUN_BULLET_DAMAGE = 1; // hitpoints
 
 /* Beam Cannon */
-export const BEAM_CANNON_NAME = "Beam Cannon";
+export const BEAM_CANNON_NAME = "Laser";
 export const BEAM_CANNON_MAX_CHARGE_REFILLS = 3;
 export const BEAM_CANNON_MAX_CHARGE = 100;
 export const BEAM_CANNON_CHARGE_CONSUMPTION = 0.1; // Charge per frame
