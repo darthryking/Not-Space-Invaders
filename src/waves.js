@@ -33,6 +33,7 @@ export default class EnemyManager extends Renderable {
         super(game, 0, 0);
 
         this.currentWaveIndex = 0;
+        this.currentWave = [];
         this.#nextWaveTime = WAVE_SPAWN_DELAY;
 
         this.#waves = [];
@@ -193,7 +194,7 @@ export default class EnemyManager extends Renderable {
     }
 
     allEnemiesDefeated() {
-        const currentEnemies = this.#waves[this.currentWaveIndex];
+        const currentEnemies = this.currentWave;
 
         let waveOnlyHasMeteors = true;
         for (const enemy of currentEnemies) {
@@ -221,13 +222,14 @@ export default class EnemyManager extends Renderable {
     }
 
     spawnNextWave() {
-        while (this.currentWaveIndex >= this.#waves.length) {
-            this.addWave(this.generateWave());
+        if (this.currentWaveIndex < this.#waves.length) {
+            this.currentWave = this.#waves[this.currentWaveIndex];
+        }
+        else {
+            this.currentWave = this.generateWave();
         }
 
-        const enemies = this.#waves[this.currentWaveIndex];
-
-        for (const enemy of enemies) {
+        for (const enemy of this.currentWave) {
             this.game.addGameObject(enemy);
         }
 
