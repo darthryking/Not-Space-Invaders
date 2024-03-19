@@ -181,9 +181,16 @@ export default class EnemyManager extends Renderable {
     }
 
     draw(ctx) {
-        if (this.#nextWaveTime !== null) {
-            const canvas = this.game.canvas;
+        const canvas = this.game.canvas;
 
+        writeText(
+            ctx,
+            canvas.width - 10, 30,
+            `${this.currentWaveIndex + 1}`,
+            '24pt sans-serif', '#FFFFFF', 'right',
+        );
+
+        if (this.#nextWaveTime !== null) {
             writeText(
                 ctx,
                 canvas.width / 2, canvas.height / 2,
