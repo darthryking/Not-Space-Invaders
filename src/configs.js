@@ -94,9 +94,9 @@ export const MISSILE_LAUNCHER_MISSILE_UFO_DAMAGE_MULTIPLIER = 3;
 /* Shop */
 export const SHOP_Y = 100; // px
 export const SHOP_WIDTH = 800; // px
-export const SHOP_HEIGHT = 800; // px
+export const SHOP_HEIGHT = 500; // px
 
-export const BEAM_CANNON_AMMO_NAME = "AA Battery";
+export const BEAM_CANNON_AMMO_NAME = "Extra Battery";
 export const MISSILE_AMMO_NAME = "Missile";
 export const LAWN_FERTILIZER_NAME = "Lawn Fertilizer";
 export const EXTRA_LIFE_NAME = "Spare Truck";

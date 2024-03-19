@@ -210,9 +210,11 @@ export class ShieldedAlien extends Alien {
     }
 
     getAimPos() {
+        const game = this.game;
+
         const livingLawnSegments = [];
 
-        for (const lawnSegment of this.game.lawn) {
+        for (const lawnSegment of game.lawn) {
             if (lawnSegment.isAlive) {
                 livingLawnSegments.push(lawnSegment);
             }
@@ -220,7 +222,12 @@ export class ShieldedAlien extends Alien {
 
         const numLivingLawnSegments = livingLawnSegments.length;
         if (numLivingLawnSegments <= 0) {
-            return super.getAimPos();
+            if (game.player.isAlive) {
+                return game.player.getCenter();
+            }
+            else {
+                return super.getAimPos();
+            }
         }
 
         const targetIndex = Math.trunc(randRange(0, numLivingLawnSegments));
